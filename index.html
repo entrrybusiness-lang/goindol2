@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>고인돌 2 - 무한 스테이지</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;-webkit-tap-highlight-color:transparent;}
+:root{
+  --gold:#ffcc00;--gold2:#ffd700;--red:#ff3333;--dark:#0a0a14;
+  --panel:#0d0d1a;--border:#ffcc00;--text:#fff;--muted:#aaa;
+}
+body{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;overflow:hidden;}
+
+/* ─── AUTH ─── */
+#auth-modal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:999;display:flex;align-items:center;justify-content:center;}
+.auth-box{background:var(--panel);border:3px solid var(--gold);padding:28px 30px;width:340px;max-width:94vw;display:flex;flex-direction:column;gap:12px;}
+.auth-logo{font-size:38px;text-align:center;}
+.auth-title{color:var(--gold);font-size:13px;text-align:center;text-shadow:3px 3px 0 #c00;}
+.auth-tabs{display:flex;border-bottom:2px solid #333;}
+.auth-tab{flex:1;padding:8px;background:none;border:none;color:#555;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.auth-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.auth-input{background:#111;border:2px solid #333;color:#fff;font-family:monospace,sans-serif;font-size:9px;padding:10px 10px;width:100%;outline:none;transition:border .2s;}
+.auth-input:focus{border-color:var(--gold);}
+.auth-btn{background:var(--gold);border:none;color:#000;font-family:'Press Start 2P',monospace;font-size:9px;padding:11px;cursor:pointer;transition:all .15s;}
+.auth-btn:hover{background:#ffe066;}
+.auth-err{color:#f55;font-size:7px;text-align:center;min-height:14px;}
+.auth-ok{color:#5f5;font-size:7px;text-align:center;min-height:14px;}
+.auth-panel{display:none;flex-direction:column;gap:12px;}
+.auth-panel.active{display:flex;}
+.auth-divider{height:1px;background:#1e1e1e;}
+.auth-sub{color:#444;font-size:6px;text-align:center;line-height:2.2;}
+
+/* ─── VIP BADGE ─── */
+#vip-badge{position:fixed;top:0;right:0;background:linear-gradient(135deg,var(--gold2),#ff8c00);color:#000;font-size:7px;padding:4px 8px;z-index:200;display:none;font-family:'Press Start 2P',monospace;cursor:pointer;}
+
+/* ─── ADMIN ─── */
+#admin-panel{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:998;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;overflow-y:auto;}
+.admin-box{background:var(--panel);border:3px solid #f00;padding:20px;width:480px;max-width:95vw;display:flex;flex-direction:column;gap:12px;}
+.admin-title{color:#f00;font-size:11px;text-align:center;}
+.admin-row{display:flex;gap:6px;align-items:center;}
+.admin-input{background:#111;border:2px solid #333;color:#fff;font-family:monospace,sans-serif;font-size:8px;padding:8px;flex:1;}
+.admin-btn{background:#f00;border:none;color:#fff;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px 10px;cursor:pointer;white-space:nowrap;}
+.admin-btn:hover{background:#c00;}
+.admin-btn.green{background:#080;}.admin-btn.green:hover{background:#0a0;}
+.admin-list{background:#111;border:1px solid #333;padding:8px;max-height:200px;overflow-y:auto;font-size:6px;color:#aaa;line-height:2.4;}
+.user-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;padding:3px 0;}
+.user-vip{color:var(--gold2);}.user-normal{color:#666;}
+#admin-msg{color:#0f0;font-size:7px;text-align:center;min-height:12px;}
+
+/* ─── VIP MODAL ─── */
+#vip-modal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:997;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.vip-box{background:linear-gradient(135deg,#1a1200,#2a1800);border:3px solid var(--gold2);padding:24px 28px;width:380px;max-width:95vw;display:flex;flex-direction:column;gap:11px;max-height:90vh;overflow-y:auto;}
+.vip-crown{font-size:36px;text-align:center;}
+.vip-title{color:var(--gold2);font-size:12px;text-align:center;}
+.vip-perk{color:#fff;font-size:6.5px;line-height:2.8;padding:10px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);}
+.vip-price{color:var(--gold2);font-size:10px;text-align:center;}
+.vip-bank{background:#111;border:2px solid var(--gold2);padding:10px;color:#fff;font-size:6.5px;line-height:2.6;text-align:center;}
+.vip-close{background:none;border:2px solid #444;color:#777;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px;cursor:pointer;}
+.vip-close:hover{border-color:var(--gold2);color:var(--gold2);}
+
+/* ─── VIP+ MODAL ─── */
+#vipp-modal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:998;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.vipp-box{background:linear-gradient(135deg,#0a0020,#140030,#0a0020);border:3px solid #cc44ff;padding:24px 28px;width:400px;max-width:96vw;display:flex;flex-direction:column;gap:11px;max-height:92vh;overflow-y:auto;}
+.vipp-crown{font-size:38px;text-align:center;}
+.vipp-title{color:#cc44ff;font-size:11px;text-align:center;text-shadow:0 0 18px #aa00ff;}
+.vipp-badge-label{display:block;background:linear-gradient(90deg,#8800ff,#cc44ff,#8800ff);color:#fff;font-size:7px;padding:3px 10px;text-align:center;letter-spacing:1px;}
+.vipp-perk{color:#dda0ff;font-size:6.5px;line-height:3;padding:10px;background:rgba(170,0,255,.07);border:1px solid rgba(170,0,255,.25);}
+.vipp-perk b{color:#ee88ff;}
+.vipp-price{color:#cc44ff;font-size:11px;text-align:center;text-shadow:0 0 10px #8800ff;}
+.vipp-bank{background:#0e0018;border:2px solid #8800ff;padding:10px;color:#dda0ff;font-size:6.5px;line-height:2.6;text-align:center;}
+.vipp-close{background:none;border:2px solid #440066;color:#884499;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px;cursor:pointer;}
+.vipp-close:hover{border-color:#cc44ff;color:#cc44ff;}
+@keyframes vipp-glow{0%,100%{box-shadow:0 0 12px rgba(170,0,255,.35)}50%{box-shadow:0 0 36px rgba(170,0,255,.9),0 0 70px rgba(100,0,200,.35)}}
+.vipp-box{animation:vipp-glow 2.5s ease-in-out infinite;}
+
+/* ─── VIP+ BADGE ─── */
+#vipp-badge{position:fixed;top:28px;right:0;background:linear-gradient(135deg,#8800ff,#cc44ff);color:#fff;font-size:7px;padding:4px 8px;z-index:201;display:none;font-family:'Press Start 2P',monospace;cursor:pointer;animation:vipp-glow 2s ease-in-out infinite;}
+
+/* ─── VIP+ DASHBOARD ─── */
+#vipp-dashboard{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:997;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
+.vippdash-box{background:linear-gradient(160deg,#080014,#110022,#080014);border:3px solid #cc44ff;padding:22px 26px;width:540px;max-width:96vw;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow-y:auto;}
+.vippdash-header{display:flex;align-items:center;justify-content:space-between;}
+.vippdash-title{color:#cc44ff;font-size:12px;text-shadow:2px 2px 0 #440088;}
+.vippdash-close{background:none;border:2px solid #440066;color:#660099;font-family:'Press Start 2P',monospace;font-size:7px;padding:6px 10px;cursor:pointer;}
+.vippdash-close:hover{border-color:#cc44ff;color:#cc44ff;}
+.vippdash-section{border:1px solid rgba(170,0,255,.2);background:rgba(170,0,255,.04);padding:12px;}
+.vippdash-label{color:#8833bb;font-size:6px;margin-bottom:8px;}
+.vippdash-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+.vippdash-input{background:#0a0018;border:2px solid #440066;color:#dda0ff;font-family:monospace,sans-serif;font-size:8px;padding:8px;flex:1;outline:none;}
+.vippdash-input:focus{border-color:#cc44ff;}
+.vippdash-btn{background:linear-gradient(90deg,#6600cc,#cc44ff,#6600cc);border:none;color:#fff;font-family:'Press Start 2P',monospace;font-size:7px;padding:9px 12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.vippdash-btn:hover{filter:brightness(1.3);}
+.vippdash-btn:disabled{background:#220033;color:#440066;cursor:not-allowed;}
+.vippdash-perk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.vippdash-perk-item{padding:8px;background:rgba(0,0,0,.5);border:1px solid #220033;font-size:6px;color:#bb88dd;}
+.vippdash-perk-item .pi-icon{font-size:14px;display:block;text-align:center;margin-bottom:4px;}
+.vippdash-perk-item .pi-name{color:#cc44ff;font-size:6px;display:block;text-align:center;margin-bottom:2px;}
+.vippdash-perk-item .pi-desc{color:#664488;font-size:5px;display:block;text-align:center;line-height:1.8;}
+#vippdash-tp-result{color:#44ff88;font-size:6.5px;text-align:center;min-height:14px;}
+#vippdash-onekill-status{color:#44ff88;font-size:6px;text-align:center;min-height:12px;}
+.vippdash-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(0,0,0,.4);border:1px solid #220033;}
+.vippdash-toggle-name{color:#dda0ff;font-size:6px;}
+.toggle-btn{background:#220033;border:2px solid #440066;color:#660099;font-family:'Press Start 2P',monospace;font-size:6px;padding:5px 10px;cursor:pointer;transition:all .15s;}
+.toggle-btn.on{background:#6600cc;border-color:#cc44ff;color:#fff;}
+
+/* ─── VIP DASHBOARD ─── */
+#vip-dashboard{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:996;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
+.vdash-box{background:linear-gradient(160deg,#0e0900,#1a1200,#0e0900);border:3px solid var(--gold2);padding:22px 26px;width:520px;max-width:96vw;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow-y:auto;}
+.vdash-header{display:flex;align-items:center;justify-content:space-between;}
+.vdash-title{color:var(--gold2);font-size:12px;text-shadow:2px 2px 0 #a06000;}
+.vdash-close{background:none;border:2px solid #444;color:#666;font-family:'Press Start 2P',monospace;font-size:7px;padding:6px 10px;cursor:pointer;}
+.vdash-close:hover{border-color:var(--gold2);color:var(--gold2);}
+.vdash-section{border:1px solid rgba(255,204,0,.2);background:rgba(255,204,0,.04);padding:12px;}
+.vdash-label{color:#886600;font-size:6px;margin-bottom:8px;}
+.vdash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.vdash-stat{background:rgba(0,0,0,.5);border:1px solid #332200;padding:10px;text-align:center;}
+.vdash-stat-val{color:var(--gold2);font-size:13px;margin-bottom:4px;}
+.vdash-stat-lbl{color:#664400;font-size:5.5px;}
+.vdash-skills{display:flex;flex-direction:column;gap:7px;}
+.vdash-skill{display:flex;align-items:center;justify-content:space-between;padding:8px;background:rgba(0,0,0,.4);border:1px solid #221a00;}
+.vdash-skill-name{color:#ffaa00;font-size:6px;}
+.vdash-skill-key{color:#554400;font-size:5.5px;}
+.vdash-weapon{display:flex;gap:8px;justify-content:center;}
+.wlv-btn{flex:1;padding:10px 6px;border:2px solid #332200;background:rgba(0,0,0,.5);color:#554400;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;transition:all .15s;}
+.wlv-btn.active{border-color:var(--gold2);background:rgba(255,204,0,.15);color:var(--gold2);}
+.wlv-btn:hover:not(.active){border-color:#664400;color:#aa7700;}
+.vdash-weap-desc{color:#776600;font-size:6px;line-height:2.2;text-align:center;padding:8px;background:rgba(0,0,0,.3);}
+#vdash-upgrade-btn{background:linear-gradient(90deg,#cc8800,#ffcc00,#cc8800);border:none;color:#000;font-family:'Press Start 2P',monospace;font-size:8px;padding:12px;cursor:pointer;transition:all .15s;}
+#vdash-upgrade-btn:hover{background:linear-gradient(90deg,#ffcc00,#fff8aa,#ffcc00);}
+#vdash-upgrade-btn:disabled{background:#332200;color:#554400;cursor:not-allowed;}
+
+/* ─── LEADERBOARD ─── */
+#leaderboard-modal{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:995;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.lb-box{background:var(--panel);border:3px solid var(--gold);padding:22px 26px;width:480px;max-width:96vw;display:flex;flex-direction:column;gap:12px;max-height:88vh;}
+.lb-title{color:var(--gold);font-size:12px;text-align:center;text-shadow:2px 2px 0 #c00;}
+.lb-tabs{display:flex;gap:4px;}
+.lb-tab{flex:1;padding:7px;background:none;border:2px solid #333;color:#555;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;}
+.lb-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(255,204,0,.08);}
+.lb-list{overflow-y:auto;max-height:340px;display:flex;flex-direction:column;gap:4px;}
+.lb-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid #1a1a1a;}
+.lb-row.me{border-color:var(--gold2);background:rgba(255,204,0,.08);}
+.lb-rank{color:#555;font-size:7px;min-width:22px;text-align:center;}
+.lb-rank.top1{color:#ffd700;font-size:10px;}
+.lb-rank.top2{color:#c0c0c0;font-size:9px;}
+.lb-rank.top3{color:#cd7f32;font-size:9px;}
+.lb-name{flex:1;color:#ccc;font-size:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-name .vip-tag{color:var(--gold2);font-size:6px;}
+.lb-score{color:#fff;font-size:8px;min-width:80px;text-align:right;}
+.lb-stage{color:#555;font-size:6px;min-width:32px;text-align:right;}
+.lb-close{background:none;border:2px solid #333;color:#555;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px;cursor:pointer;}
+.lb-close:hover{border-color:var(--gold);color:var(--gold);}
+.lb-empty{color:#333;font-size:7px;text-align:center;padding:30px;}
+.lb-loading{color:#555;font-size:7px;text-align:center;padding:20px;animation:lb-pulse 1s infinite;}
+@keyframes lb-pulse{50%{opacity:.3}}
+
+/* ─── PAUSE SCREEN ─── */
+#pause-screen{position:absolute;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:150;font-family:'Press Start 2P',monospace;}
+#pause-screen h2{color:var(--gold);font-size:18px;text-shadow:3px 3px 0 #c00;}
+#pause-screen .pause-sub{color:#555;font-size:7px;}
+.pause-btn{background:none;border:2px solid var(--gold);color:var(--gold);font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 24px;cursor:pointer;min-width:200px;transition:all .15s;}
+.pause-btn:hover{background:var(--gold);color:#000;}
+.pause-btn.red{border-color:#f44;color:#f44;}.pause-btn.red:hover{background:#f44;color:#000;}
+/* ─── SETTINGS MODAL ─── */
+#settings-modal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:996;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.settings-box{background:var(--panel);border:3px solid var(--gold);padding:24px 28px;width:420px;max-width:96vw;display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow-y:auto;}
+.settings-title{color:var(--gold);font-size:11px;text-align:center;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #111;}
+.settings-label{color:#888;font-size:6px;}
+.settings-slider{-webkit-appearance:none;width:120px;height:6px;background:#222;border-radius:3px;outline:none;}
+.settings-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;}
+.settings-val{color:var(--gold);font-size:6px;min-width:28px;text-align:right;}
+.keybind-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.keybind-row{display:flex;justify-content:space-between;align-items:center;background:#0a0a0a;border:1px solid #1a1a1a;padding:7px 10px;}
+.keybind-action{color:#666;font-size:5.5px;}
+.keybind-key{color:var(--gold);font-size:6px;background:#111;border:1px solid #333;padding:2px 6px;}
+/* ─── INVITE MODAL ─── */
+#invite-modal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:996;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.invite-box{background:var(--panel);border:3px solid var(--gold);padding:24px 28px;width:400px;max-width:96vw;display:flex;flex-direction:column;gap:12px;}
+.invite-title{color:var(--gold);font-size:11px;text-align:center;}
+.invite-sub{color:#555;font-size:6px;text-align:center;line-height:2.4;}
+.invite-code-display{background:#0a0a0a;border:2px solid var(--gold);color:var(--gold);font-size:12px;padding:14px;text-align:center;letter-spacing:4px;cursor:pointer;}
+.invite-copy-btn{background:var(--gold);border:none;color:#000;font-family:'Press Start 2P',monospace;font-size:8px;padding:10px;cursor:pointer;}
+.invite-reward{color:#0f0;font-size:6px;text-align:center;background:rgba(0,255,0,.06);border:1px solid rgba(0,255,0,.15);padding:8px;line-height:2.4;}
+#invite-msg{color:#0cf;font-size:7px;text-align:center;min-height:14px;}
+.invite-input-row{display:flex;gap:6px;}
+.invite-input{background:#111;border:2px solid #333;color:#fff;font-family:monospace,sans-serif;font-size:9px;padding:9px;flex:1;text-transform:uppercase;letter-spacing:2px;}
+.invite-input:focus{border-color:var(--gold);outline:none;}
+.invite-submit-btn{background:none;border:2px solid var(--gold);color:var(--gold);font-family:'Press Start 2P',monospace;font-size:7px;padding:9px 12px;cursor:pointer;white-space:nowrap;}
+/* ─── NOTICE BANNER ─── */
+#notice-banner{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(90deg,#cc0000,#ff4400,#cc0000);color:#fff;font-family:'Press Start 2P',monospace;font-size:7px;padding:7px 16px;display:none;align-items:center;justify-content:space-between;gap:8px;}
+#notice-text{flex:1;text-align:center;line-height:2;white-space:pre-wrap;}
+#notice-close{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-family:'Press Start 2P',monospace;font-size:6px;padding:3px 7px;cursor:pointer;}
+
+/* ─── ACHIEVEMENT MODAL ─── */
+#ach-modal{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:995;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.ach-box{background:linear-gradient(160deg,#0a0a18,#111128);border:3px solid var(--gold);padding:22px 26px;width:500px;max-width:96vw;display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow-y:auto;}
+.ach-title{color:var(--gold);font-size:11px;text-align:center;}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.ach-item{padding:10px;background:rgba(0,0,0,.5);border:2px solid #222;display:flex;flex-direction:column;gap:4px;transition:border .2s;}
+.ach-item.done{border-color:var(--gold2);background:rgba(255,204,0,.07);}
+.ach-item.done .ach-name{color:var(--gold2);}
+.ach-icon{font-size:20px;text-align:center;}
+.ach-name{color:#555;font-size:6px;text-align:center;}
+.ach-desc{color:#333;font-size:5px;text-align:center;line-height:1.8;}
+.ach-prog{height:4px;background:#111;margin-top:3px;border-radius:2px;}
+.ach-prog-bar{height:4px;background:var(--gold2);border-radius:2px;transition:width .3s;}
+.ach-reward{color:#f80;font-size:5px;text-align:center;}
+#ach-title-display{color:#0cf;font-size:7px;text-align:center;padding:6px;background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.2);}
+
+/* ─── ATTENDANCE MODAL ─── */
+#att-modal{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:995;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.att-box{background:linear-gradient(160deg,#080814,#0e0e22);border:3px solid #0cf;padding:22px 26px;width:420px;max-width:96vw;display:flex;flex-direction:column;gap:12px;}
+.att-title{color:#0cf;font-size:11px;text-align:center;}
+.att-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.att-day{padding:7px 4px;background:rgba(0,0,0,.5);border:1px solid #111;text-align:center;font-size:5.5px;color:#333;}
+.att-day.checked{border-color:#0cf;background:rgba(0,200,255,.1);color:#0cf;}
+.att-day.today{border-color:#0f0;background:rgba(0,255,0,.1);color:#0f0;animation:blink 1s step-end infinite;}
+.att-day-num{font-size:7px;margin-bottom:2px;}
+.att-reward{font-size:8px;}
+.att-streak{color:#0cf;font-size:8px;text-align:center;}
+#att-claim-btn{background:linear-gradient(90deg,#006688,#0cf,#006688);border:none;color:#000;font-family:'Press Start 2P',monospace;font-size:8px;padding:12px;cursor:pointer;}
+#att-claim-btn:disabled{background:#111;color:#333;cursor:not-allowed;}
+#att-msg{color:#0f0;font-size:7px;text-align:center;min-height:14px;}
+
+/* ─── COUPON MODAL ─── */
+#coupon-modal{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:995;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.coupon-box{background:var(--panel);border:3px solid var(--gold);padding:24px 28px;width:360px;max-width:96vw;display:flex;flex-direction:column;gap:12px;}
+.coupon-title{color:var(--gold);font-size:11px;text-align:center;}
+.coupon-input{background:#111;border:2px solid #333;color:#fff;font-family:monospace,sans-serif;font-size:11px;padding:12px;width:100%;text-align:center;letter-spacing:3px;text-transform:uppercase;}
+.coupon-input:focus{border-color:var(--gold);outline:none;}
+#coupon-submit{background:var(--gold);border:none;color:#000;font-family:'Press Start 2P',monospace;font-size:9px;padding:12px;cursor:pointer;}
+#coupon-submit:hover{background:#ffe066;}
+#coupon-msg{font-size:7px;text-align:center;min-height:14px;}
+
+/* ─── ADMIN STATS ─── */
+.admin-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.admin-stat-card{background:#0a0a0a;border:1px solid #333;padding:8px;text-align:center;}
+.admin-stat-val{color:#0f0;font-size:11px;}
+.admin-stat-lbl{color:#444;font-size:5.5px;margin-top:3px;}
+
+/* ─── ACHIEVEMENT POPUP ─── */
+#ach-popup{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:500;background:linear-gradient(135deg,#1a1200,#2a1800);border:2px solid var(--gold2);padding:10px 18px;display:none;flex-direction:column;align-items:center;gap:4px;font-family:'Press Start 2P',monospace;animation:achPop .4s ease-out;}
+@keyframes achPop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+#ach-popup .ap-icon{font-size:22px;}
+#ach-popup .ap-label{color:#888;font-size:5px;}
+#ach-popup .ap-name{color:var(--gold2);font-size:7px;}
+
+/* ─── GAME WRAPPER ─── */
+#wrapper{position:relative;width:800px;display:none;}
+
+/* ─── HUD ─── */
+#hud{
+  background:linear-gradient(90deg,#0d0d20,#111128,#0d0d20);
+  border:3px solid var(--gold);border-bottom:none;
+  padding:5px 10px;display:flex;align-items:center;justify-content:space-between;
+  font-size:8px;color:var(--gold);gap:4px;flex-wrap:wrap;
+}
+.hud-section{display:flex;align-items:center;gap:5px;}
+.hud-label{color:#666;font-size:6px;}
+#score-val{color:#fff;font-size:9px;min-width:72px;}
+.heart{font-size:12px;transition:all .2s;line-height:1;}
+.heart.empty{filter:grayscale(1) brightness(0.3);}
+#combo-hud{font-size:8px;min-width:64px;transition:all .1s;}
+#user-info-hud{color:var(--gold);font-size:6px;cursor:pointer;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#user-info-hud:hover{color:#fff;}
+#weapon-hud{font-size:7px;color:#ffaa00;min-width:32px;}
+
+canvas{display:block;border:3px solid var(--gold);}
+
+/* ─── OVERLAYS ─── */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:80;}
+.blink{animation:blink 1s step-end infinite;font-size:8px;color:var(--gold);cursor:pointer;}
+@keyframes blink{50%{opacity:0}}
+#title-screen{z-index:100;background:radial-gradient(ellipse at center,#0a0a2a 0%,#000 70%);}
+#title-screen h1{color:var(--gold);text-shadow:4px 4px 0 #c00;font-size:22px;}
+.start-btn{background:none;border:2px solid var(--gold);color:var(--gold);font-family:'Press Start 2P',monospace;font-size:8px;padding:9px 18px;cursor:pointer;margin-top:4px;transition:all .15s;}
+.start-btn:hover{background:var(--gold);color:#000;}
+
+#boss-warn{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);color:#f00;font-size:18px;font-family:'Press Start 2P',monospace;text-align:center;display:none;z-index:90;text-shadow:0 0 20px #f00;animation:bossFlash .4s step-end infinite;}
+@keyframes bossFlash{50%{opacity:.2}}
+#item-notif{position:absolute;top:58px;left:50%;transform:translateX(-50%);font-size:9px;font-family:'Press Start 2P',monospace;display:none;z-index:85;white-space:nowrap;text-shadow:0 0 8px currentColor;}
+#stage-banner{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);display:none;z-index:88;text-align:center;pointer-events:none;}
+#stage-banner h2{font-size:20px;color:var(--gold);text-shadow:3px 3px 0 #c00;}
+#stage-banner p{font-size:7px;color:#fff;margin-top:6px;}
+
+/* ─── DASH COOLDOWN INDICATOR ─── */
+#dash-indicator{position:absolute;bottom:54px;left:50%;transform:translateX(-50%);display:none;z-index:86;font-family:'Press Start 2P',monospace;font-size:7px;color:#0cf;text-shadow:0 0 8px #0cf;}
+
+/* ─── JOYSTICK MOBILE CONTROLS ─── */
+#mobile-ctrl{
+  display:none;
+  background:linear-gradient(180deg,#060610,#0a0a18);
+  border:3px solid var(--gold);border-top:none;
+  padding:14px 20px 18px;
+  position:relative;
+  height:190px;
+  align-items:center;
+  justify-content:space-between;
+}
+#joy-zone{
+  position:relative;width:152px;height:152px;
+  border-radius:50%;
+  background:radial-gradient(circle,#1a1a30 0%,#0a0a18 100%);
+  border:2px solid #333;
+  touch-action:none;
+  flex-shrink:0;
+}
+#joy-base{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#222240 0%,#111128 60%,#0a0a18 100%);border:2px solid #2a2a50;}
+#joy-ring{position:absolute;inset:10px;border-radius:50%;border:1px solid rgba(255,204,0,.15);}
+#joy-stick{
+  position:absolute;width:58px;height:58px;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%,#ffcc44,#cc9900 60%,#886600 100%);
+  border:2px solid rgba(255,204,0,.5);
+  box-shadow:0 4px 12px rgba(0,0,0,.6),inset 0 -2px 4px rgba(0,0,0,.4);
+  left:50%;top:50%;transform:translate(-50%,-50%);transition:none;cursor:pointer;
+}
+#action-btns{display:flex;flex-direction:column;gap:10px;align-items:center;flex-shrink:0;}
+.act-row{display:flex;gap:10px;}
+.act-btn{
+  width:72px;height:72px;border-radius:50%;border:none;
+  font-family:'Press Start 2P',monospace;font-size:22px;cursor:pointer;
+  user-select:none;touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;transition:transform .08s,filter .08s;
+  box-shadow:0 5px 0 rgba(0,0,0,.6),0 8px 16px rgba(0,0,0,.5);
+}
+.act-btn:active,.act-btn.pressed{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.5);filter:brightness(.85);}
+#btn-jump{background:radial-gradient(circle at 38% 35%,#4488ff,#1144cc);border:2px solid #2255ee;color:#fff;}
+#btn-atk{background:radial-gradient(circle at 38% 35%,#ff6644,#cc2200);border:2px solid #ee3311;color:#fff;}
+#btn-dash{background:radial-gradient(circle at 38% 35%,#00ccff,#0077cc);border:2px solid #00aaff;color:#fff;display:none;}
+.act-label{font-size:9px;color:#666;font-family:'Press Start 2P',monospace;text-align:center;margin-top:2px;}
+.joy-arrow{position:absolute;color:rgba(255,204,0,.25);font-size:14px;pointer-events:none;}
+.joy-arrow.up{top:6px;left:50%;transform:translateX(-50%);}
+.joy-arrow.dn{bottom:6px;left:50%;transform:translateX(-50%);}
+.joy-arrow.lt{left:6px;top:50%;transform:translateY(-50%);}
+.joy-arrow.rt{right:6px;top:50%;transform:translateY(-50%);}
+
+@media(max-width:820px){
+  #wrapper{width:100vw;}canvas{width:100%;height:auto;}
+  #mobile-ctrl{display:flex;}
+  /* HUD 글씨 크게 */
+  #hud{font-size:11px;padding:7px 12px;}
+  #score-val{font-size:13px;}
+  .hud-label{font-size:9px;}
+  .heart{font-size:17px;}
+  #combo-hud{font-size:11px;}
+  #hud-lives{font-size:12px;}
+  #user-info-hud{font-size:9px;max-width:150px;}
+  #weapon-hud{font-size:10px;}
+  /* 타이틀 화면 */
+  #title-screen h1{font-size:18px;}
+  .start-btn{font-size:9px;padding:11px 20px;}
+}
+@media(max-width:480px){
+  #hud{gap:4px;padding:6px 8px;font-size:10px;}
+  #score-val{font-size:12px;}
+  .hud-label{font-size:8px;}
+  .heart{font-size:15px;}
+  #user-info-hud{max-width:80px;font-size:8px;}
+  #mobile-ctrl{height:210px;}
+  #joy-zone{width:164px;height:164px;}
+  #joy-stick{width:64px;height:64px;}
+  .act-btn{width:78px;height:78px;font-size:24px;}
+  .act-label{font-size:9px;}
+  .start-btn{font-size:8px;padding:10px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NOTICE BANNER ── -->
+<div id="notice-banner">
+  <span id="notice-text"></span>
+  <button id="notice-close" onclick="document.getElementById('notice-banner').style.display='none'">✕</button>
+</div>
+
+<!-- ── ACHIEVEMENT POPUP ── -->
+<div id="ach-popup">
+  <div class="ap-label">🏆 업적 달성!</div>
+  <div class="ap-icon" id="ap-icon">🎖️</div>
+  <div class="ap-name" id="ap-name"></div>
+</div>
+
+<!-- ── ACHIEVEMENT MODAL ── -->
+<div id="ach-modal">
+  <div class="ach-box">
+    <div class="ach-title">🏆 업적</div>
+    <div id="ach-title-display">칭호: 없음</div>
+    <div class="ach-grid" id="ach-grid"></div>
+    <button class="vip-close" onclick="document.getElementById('ach-modal').style.display='none'">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── ATTENDANCE MODAL ── -->
+<div id="att-modal">
+  <div class="att-box">
+    <div class="att-title">📅 출석 체크</div>
+    <div class="att-streak" id="att-streak">연속 출석: 0일 🔥</div>
+    <div class="att-grid" id="att-grid"></div>
+    <div id="att-msg"></div>
+    <button id="att-claim-btn">✅ 오늘 출석 체크!</button>
+    <button class="vip-close" onclick="document.getElementById('att-modal').style.display='none'">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── COUPON MODAL ── -->
+<div id="coupon-modal">
+  <div class="coupon-box">
+    <div class="coupon-title">🎟️ 쿠폰 코드</div>
+    <div style="color:#666;font-size:6px;text-align:center;">쿠폰 코드를 입력하면 VIP·점수·특별 혜택을 받을 수 있어요!</div>
+    <input class="coupon-input" id="coupon-input" placeholder="코드 입력" maxlength="20">
+    <button id="coupon-submit">🎁 사용하기</button>
+    <div id="coupon-msg"></div>
+    <button class="vip-close" onclick="document.getElementById('coupon-modal').style.display='none'">✕ 닫기</button>
+  </div>
+</div>
+
+
+<!-- ── SETTINGS MODAL ── -->
+<div id="settings-modal">
+  <div class="settings-box">
+    <div class="settings-title">⚙️ 설정</div>
+    <div class="settings-row">
+      <span class="settings-label">🔊 효과음 볼륨</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input class="settings-slider" type="range" id="sfx-vol" min="0" max="100" value="80">
+        <span class="settings-val" id="sfx-vol-val">80%</span>
+      </div>
+    </div>
+    <div style="color:#666;font-size:6px;">🎮 키 설정</div>
+    <div class="keybind-grid">
+      <div class="keybind-row"><span class="keybind-action">이동 좌</span><span class="keybind-key">← / A</span></div>
+      <div class="keybind-row"><span class="keybind-action">이동 우</span><span class="keybind-key">→ / D</span></div>
+      <div class="keybind-row"><span class="keybind-action">점프</span><span class="keybind-key">↑ / Z / W</span></div>
+      <div class="keybind-row"><span class="keybind-action">공격</span><span class="keybind-key">Space / X</span></div>
+      <div class="keybind-row"><span class="keybind-action">대쉬 (VIP)</span><span class="keybind-key">C</span></div>
+      <div class="keybind-row"><span class="keybind-action">일시정지</span><span class="keybind-key">ESC</span></div>
+    </div>
+    <button class="vip-close" onclick="document.getElementById('settings-modal').style.display='none'">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── INVITE MODAL ── -->
+<div id="invite-modal">
+  <div class="invite-box">
+    <div class="invite-title">🤝 친구 초대</div>
+    <div class="invite-sub">친구를 초대하면 <span style="color:var(--gold)">+3,000점</span> 보너스!<br>친구가 가입 시 친구도 <span style="color:#0cf">+1,000점</span> 지급</div>
+    <div style="color:#666;font-size:6px;">내 초대 코드</div>
+    <div class="invite-code-display" id="invite-code-display" onclick="copyInviteCode()">로딩 중...</div>
+    <button class="invite-copy-btn" onclick="copyInviteCode()">📋 코드 복사</button>
+    <div id="invite-msg"></div>
+    <div style="color:#666;font-size:6px;margin-top:4px;">초대 코드 입력 (친구에게 받은 코드)</div>
+    <div class="invite-input-row">
+      <input class="invite-input" id="invite-code-input" placeholder="코드 입력" maxlength="8">
+      <button class="invite-submit-btn" id="btn-invite-submit">✅ 사용</button>
+    </div>
+    <div class="invite-reward">✅ 초대한 친구 수: <span id="invite-count">0</span>명<br>누적 보너스: <span id="invite-bonus">0</span>점 획득</div>
+    <button class="vip-close" onclick="document.getElementById('invite-modal').style.display='none'">✕ 닫기</button>
+  </div>
+</div>
+
+<div id="auth-modal">
+  <div class="auth-box">
+    <div class="auth-logo">🦕</div>
+    <div class="auth-title">고인돌 2</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">로그인</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">회원가입</button>
+    </div>
+    <div id="panel-login" class="auth-panel active">
+      <input class="auth-input" id="login-email" type="email" placeholder="이메일" autocomplete="email">
+      <input class="auth-input" id="login-pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+      <button class="auth-btn" id="btn-login">▶ 로그인</button>
+    </div>
+    <div id="panel-signup" class="auth-panel">
+      <input class="auth-input" id="su-name" type="text" placeholder="닉네임">
+      <input class="auth-input" id="su-email" type="email" placeholder="이메일" autocomplete="email">
+      <input class="auth-input" id="su-pw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password">
+      <button class="auth-btn" id="btn-signup">✅ 가입하기</button>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="auth-ok" id="auth-ok"></div>
+    <div class="auth-divider"></div>
+    <div class="auth-sub">계정에 점수·진행도가 저장됩니다<br>👑 VIP 가입 시 강력한 혜택!</div>
+  </div>
+</div>
+
+<div id="vip-badge" onclick="openVipDashboard()">👑 VIP 대시보드</div>
+<div id="vipp-badge" onclick="openVippDashboard()">💜 VIP+ 대시보드</div>
+
+<!-- ── VIP+ MODAL ── -->
+<div id="vipp-modal">
+  <div class="vipp-box">
+    <div class="vipp-crown">💜</div>
+    <div class="vipp-title">VIP+ 프리미엄</div>
+    <div class="vipp-badge-label">✦ ULTIMATE MEMBERSHIP ✦</div>
+    <div class="vipp-perk">
+      ✅ <b>VIP 혜택 전부 포함</b><br>
+      🌀 <b>스테이지 순간이동</b> — 원하는 스테이지로 즉시 이동!<br>
+      ☠️ <b>원킬 모드</b> — 공격 한 방에 모든 적 즉사!<br>
+      ♾️ <b>무한 목숨</b> — 게임오버 없음! 계속 도전!<br>
+      🛡️ <b>영구 무적</b> — 적에게 데미지를 받지 않음!<br>
+      ⚡ <b>초고속 이동</b> — 이동속도 3배 상시 적용!<br>
+      💎 <b>점수 10배</b> — 모든 획득 점수 ×10 적용!<br>
+      🎯 <b>자동조준 공격</b> — 근처 적 자동 타격!<br>
+      💰 <b>시작 보너스 +50000점</b> — VIP의 10배!<br>
+      🌈 <b>레인보우 오라</b> — 전용 무지개 이펙트!<br>
+      💜 <b>인게임 VIP+ 왕관 표시</b> — 특별 아이콘!<br>
+    </div>
+    <div class="vipp-price">월 5,000원</div>
+    <div class="vipp-bank">
+      💳 토스뱅크 계좌이체<br>
+      <span style="color:#cc44ff;font-size:9px;">1908-1023-2041</span><br><br>
+      입금 후 문자로 이메일 전송<br>
+      <span style="color:#0cf;">010-4132-6890</span><br>
+      <span style="color:#555;font-size:6px;">인증 후 24시간 내 VIP+ 적용</span>
+    </div>
+    <button class="vipp-close" id="btn-vipp-close">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── VIP+ DASHBOARD ── -->
+<div id="vipp-dashboard">
+  <div class="vippdash-box">
+    <div class="vippdash-header">
+      <div class="vippdash-title">💜 VIP+ 대시보드</div>
+      <button class="vippdash-close" id="btn-vippdash-close">✕</button>
+    </div>
+
+    <!-- 스테이지 순간이동 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">🌀 스테이지 순간이동</div>
+      <div class="vippdash-row">
+        <input class="vippdash-input" id="vipp-tp-stage" type="number" min="1" max="999" placeholder="스테이지 번호 (1~999)">
+        <button class="vippdash-btn" id="btn-vipp-tp">⚡ 이동!</button>
+      </div>
+      <div id="vippdash-tp-result"></div>
+    </div>
+
+    <!-- 전용 기능 토글 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">⚙️ VIP+ 전용 기능</div>
+      <div class="vippdash-toggle">
+        <span class="vippdash-toggle-name">☠️ 원킬 모드 (적 즉사)</span>
+        <button class="toggle-btn" id="toggle-onekill" onclick="toggleVippFeature('onekill')">OFF</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">♾️ 무한 목숨</span>
+        <button class="toggle-btn on" id="toggle-infinitelives" onclick="toggleVippFeature('infinitelives')">ON</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">🛡️ 영구 무적</span>
+        <button class="toggle-btn" id="toggle-godmode" onclick="toggleVippFeature('godmode')">OFF</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">⚡ 초고속 이동 (3배속)</span>
+        <button class="toggle-btn" id="toggle-superSpeed" onclick="toggleVippFeature('superSpeed')">OFF</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">💎 점수 10배</span>
+        <button class="toggle-btn on" id="toggle-scoreX10" onclick="toggleVippFeature('scoreX10')">ON</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">🎯 자동조준 공격</span>
+        <button class="toggle-btn" id="toggle-autoshoot" onclick="toggleVippFeature('autoshoot')">OFF</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">🌈 레인보우 오라</span>
+        <button class="toggle-btn on" id="toggle-rainbow" onclick="toggleVippFeature('rainbow')">ON</button>
+      </div>
+    </div>
+
+    <!-- 혜택 목록 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">💜 VIP+ 전용 혜택</div>
+      <div class="vippdash-perk-grid">
+        <div class="vippdash-perk-item"><span class="pi-icon">🌀</span><span class="pi-name">순간이동</span><span class="pi-desc">원하는 스테이지로</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">☠️</span><span class="pi-name">원킬 모드</span><span class="pi-desc">한 방에 즉사</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">♾️</span><span class="pi-name">무한 목숨</span><span class="pi-desc">게임오버 없음</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">🛡️</span><span class="pi-name">영구 무적</span><span class="pi-desc">데미지 0</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">⚡</span><span class="pi-name">초고속</span><span class="pi-desc">이동속도 3배</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">💎</span><span class="pi-name">점수 10배</span><span class="pi-desc">모든 점수 ×10</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">🎯</span><span class="pi-name">자동조준</span><span class="pi-desc">자동 공격</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">💰</span><span class="pi-name">+50000점</span><span class="pi-desc">시작 보너스</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">🌈</span><span class="pi-name">레인보우 오라</span><span class="pi-desc">전용 이펙트</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">💜</span><span class="pi-name">VIP+ 왕관</span><span class="pi-desc">특별 표시</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;">
+      <button class="start-btn" style="flex:1;font-size:6px;" onclick="openLeaderboard()">🏆 리더보드</button>
+      <button class="vipp-close" style="flex:1;" onclick="document.getElementById('vipp-dashboard').style.display='none'">✕ 닫기</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ── VIP MODAL ── -->
+<div id="vip-modal">
+  <div class="vip-box">
+    <div class="vip-crown">👑</div>
+    <div class="vip-title">VIP 멤버십</div>
+    <div class="vip-perk">
+      💰 게임 시작 시 +5000점 보너스<br>
+      ❤️ 목숨 5개로 시작 (일반 3개)<br>
+      ⚡ 스피드 지속시간 1.5배 (9초→13.5초)<br>
+      👊 파워 지속시간 1.5배 (7.5초→11초)<br>
+      🛡️ 무적 지속시간 1.5배 (4초→6초)<br>
+      🧪 힐 아이템 보너스 점수 2배<br>
+      💀 적 처치 점수 +20% 보너스<br>
+      🏆 보스 처치 점수 +30% 보너스<br>
+      🦘 <b style="color:#ffd700">더블점프</b> — 공중에서 한 번 더 점프!<br>
+      💨 <b style="color:#0cf">대쉬</b> — C키/버튼으로 순간이동!<br>
+      ⚔️ <b style="color:#f80">무기 업그레이드</b> — Lv1~3 강화 가능!<br>
+      🎨 황금 파티클 VIP 전용 이펙트<br>
+      👑 인게임 왕관 표시 + 황금 오라<br>
+    </div>
+    <div class="vip-price">월 1,990원</div>
+    <div class="vip-bank">
+      💳 토스뱅크 계좌이체<br>
+      <span style="color:var(--gold2);font-size:9px;">1908-1023-2041</span><br><br>
+      입금 후 문자로 이메일 전송<br>
+      <span style="color:#0cf;">010-4132-6890</span><br>
+      <span style="color:#555;font-size:6px;">인증 후 24시간 내 VIP 적용</span>
+    </div>
+    <button class="vip-close" id="btn-vip-close">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── VIP DASHBOARD ── -->
+<div id="vip-dashboard">
+  <div class="vdash-box">
+    <div class="vdash-header">
+      <div class="vdash-title">👑 VIP 대시보드</div>
+      <button class="vdash-close" id="btn-vdash-close">✕</button>
+    </div>
+
+    <!-- 스탯 -->
+    <div class="vdash-section">
+      <div class="vdash-label">📊 내 통계</div>
+      <div class="vdash-grid">
+        <div class="vdash-stat"><div class="vdash-stat-val" id="vd-bestscore">--</div><div class="vdash-stat-lbl">최고 점수</div></div>
+        <div class="vdash-stat"><div class="vdash-stat-val" id="vd-beststage">--</div><div class="vdash-stat-lbl">최고 스테이지</div></div>
+        <div class="vdash-stat"><div class="vdash-stat-val" id="vd-maxcombo">--</div><div class="vdash-stat-lbl">최대 콤보</div></div>
+        <div class="vdash-stat"><div class="vdash-stat-val" id="vd-plays">--</div><div class="vdash-stat-lbl">총 플레이</div></div>
+      </div>
+    </div>
+
+    <!-- VIP 스킬 -->
+    <div class="vdash-section">
+      <div class="vdash-label">🦘 VIP 전용 스킬</div>
+      <div class="vdash-skills">
+        <div class="vdash-skill">
+          <div class="vdash-skill-name">🦘 더블점프</div>
+          <div class="vdash-skill-key">공중에서 ↑/Z 한 번 더</div>
+        </div>
+        <div class="vdash-skill">
+          <div class="vdash-skill-name">💨 대쉬</div>
+          <div class="vdash-skill-key">C키 / 대쉬버튼 (쿨다운 2.5초)</div>
+        </div>
+        <div class="vdash-skill">
+          <div class="vdash-skill-name">⚔️ 무기 업그레이드</div>
+          <div class="vdash-skill-key">아래에서 레벨 선택</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 무기 업그레이드 -->
+    <div class="vdash-section">
+      <div class="vdash-label">⚔️ 무기 강화 (현재: <span id="vd-weaponlv">Lv1</span>)</div>
+      <div class="vdash-weapon">
+        <button class="wlv-btn active" id="wlv-1" onclick="setWeaponLevel(1)">Lv1<br><span style="font-size:5px;color:#554400">기본</span></button>
+        <button class="wlv-btn" id="wlv-2" onclick="setWeaponLevel(2)">Lv2<br><span style="font-size:5px;color:#554400">강화</span></button>
+        <button class="wlv-btn" id="wlv-3" onclick="setWeaponLevel(3)">Lv3<br><span style="font-size:5px;color:#554400">전설</span></button>
+      </div>
+      <div class="vdash-weap-desc" id="vd-weapdesc">
+        Lv1: 기본 공격 범위 48px / 데미지 1
+      </div>
+      <button id="vdash-upgrade-btn" onclick="upgradeWeapon()">⚔️ 다음 레벨 강화</button>
+    </div>
+
+    <div style="display:flex;gap:6px;">
+      <button class="start-btn" style="flex:1;font-size:6px;" onclick="openLeaderboard()">🏆 리더보드</button>
+      <button class="vip-close" style="flex:1;" onclick="document.getElementById('vip-dashboard').style.display='none'">✕ 닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LEADERBOARD ── -->
+<div id="leaderboard-modal">
+  <div class="lb-box">
+    <div class="lb-title">🏆 LEADERBOARD</div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" id="lb-tab-all" onclick="switchLbTab('all')">전체 TOP 50</button>
+      <button class="lb-tab" id="lb-tab-weekly" onclick="switchLbTab('weekly')">주간 TOP 20</button>
+      <button class="lb-tab" id="lb-tab-mine" onclick="switchLbTab('mine')">내 기록</button>
+    </div>
+    <div class="lb-list" id="lb-list"><div class="lb-loading">불러오는 중...</div></div>
+    <button class="lb-close" id="btn-lb-close">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- ── ADMIN ── -->
+<div id="admin-panel">
+  <div class="admin-box" style="width:560px;">
+    <div class="admin-title">🔧 관리자 패널</div>
+    <div id="admin-msg"></div>
+
+    <!-- 통계 -->
+    <div class="admin-stats-grid" id="admin-stats-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="admin-stat-card"><div class="admin-stat-val" id="ast-users">-</div><div class="admin-stat-lbl">총 유저</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-val" id="ast-vip">-</div><div class="admin-stat-lbl">VIP 유저</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-val" id="ast-vipp">-</div><div class="admin-stat-lbl">VIP+ 유저</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-val" id="ast-scores">-</div><div class="admin-stat-lbl">총 플레이</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-val" id="ast-online" style="color:#0f0;">-</div><div class="admin-stat-lbl">🟢 실시간 접속</div></div>
+    </div>
+
+    <!-- 공지 -->
+    <div style="color:#f80;font-size:6px;">📢 전체 공지 발송</div>
+    <div class="admin-row">
+      <textarea class="admin-input" id="admin-notice-text" placeholder="공지 내용 입력" rows="2" style="resize:vertical;"></textarea>
+      <button class="admin-btn" id="btn-send-notice" style="background:#c60;">발송</button>
+      <button class="admin-btn" id="btn-clear-notice" style="background:#333;">삭제</button>
+    </div>
+
+    <!-- VIP 부여/회수 -->
+    <div style="color:#666;font-size:6px;">VIP 부여 / 회수</div>
+    <div class="admin-row">
+      <input class="admin-input" id="admin-target-email" placeholder="이메일">
+      <button class="admin-btn green" id="btn-grant-vip">VIP</button>
+      <button class="admin-btn" id="btn-revoke-vip">회수</button>
+    </div>
+
+    <!-- 타임밴 -->
+    <div style="color:#666;font-size:6px;">⏱️ 타임밴 (분 단위)</div>
+    <div class="admin-row">
+      <input class="admin-input" id="admin-ban-email" placeholder="이메일">
+      <input class="admin-input" id="admin-ban-minutes" type="number" min="1" placeholder="분" style="max-width:72px;">
+      <button class="admin-btn" id="btn-timeban" style="background:#b00;">🔨 밴</button>
+      <button class="admin-btn" id="btn-unban" style="background:#080;">해제</button>
+    </div>
+
+    <!-- 점수 조작 -->
+    <div style="color:#666;font-size:6px;">💯 점수 직접 부여</div>
+    <div class="admin-row">
+      <input class="admin-input" id="admin-score-email" placeholder="이메일">
+      <input class="admin-input" id="admin-score-val" type="number" placeholder="점수" style="max-width:90px;">
+      <button class="admin-btn" id="btn-give-score" style="background:#006688;">부여</button>
+    </div>
+
+    <!-- 쿠폰 생성 -->
+    <div style="color:#666;font-size:6px;">🎟️ 쿠폰 생성</div>
+    <div class="admin-row">
+      <input class="admin-input" id="admin-coupon-code" placeholder="코드 (대문자)" style="text-transform:uppercase;">
+      <select class="admin-input" id="admin-coupon-type" style="max-width:110px;">
+        <option value="vip">VIP 1개월</option>
+        <option value="vipp">VIP+ 1개월</option>
+        <option value="score10k">+10,000점</option>
+        <option value="score50k">+50,000점</option>
+        <option value="score100k">+100,000점</option>
+      </select>
+      <button class="admin-btn" id="btn-create-coupon" style="background:#440088;">생성</button>
+    </div>
+
+    <div style="color:#666;font-size:6px;">전체 유저</div>
+    <div class="admin-list" id="admin-user-list">불러오는 중...</div>
+
+    <!-- 점수 기록 삭제 -->
+    <div style="color:#f80;font-size:6px;">🗑️ 점수 기록 삭제 (핵 대응)</div>
+    <div class="admin-row">
+      <input class="admin-input" id="admin-delscore-email" placeholder="이메일">
+      <button class="admin-btn" id="btn-del-scores" style="background:#880000;">기록 삭제</button>
+    </div>
+
+    <!-- 쿠폰 사용 내역 -->
+    <div style="color:#666;font-size:6px;">🎟️ 최근 쿠폰 사용 내역</div>
+    <div class="admin-list" id="admin-coupon-log" style="max-height:140px;">불러오는 중...</div>
+    <button class="admin-btn" id="btn-coupon-log-refresh" style="background:#222;">🔄 쿠폰 내역 새로고침</button>
+
+    <div style="display:flex;gap:6px;">
+      <button class="admin-btn" id="btn-admin-refresh" style="background:#222;flex:1;">🔄 새로고침</button>
+      <button class="admin-btn" id="btn-admin-close" style="background:#111;color:#555;flex:1;">✕ 닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="wrapper">
+  <div class="overlay" id="title-screen" style="display:flex">
+    <div style="font-size:48px">🦕</div>
+    <h1>고인돌 2</h1>
+    <div style="color:#f60;font-size:8px;letter-spacing:3px;">INFINITE STAGES</div>
+    <div id="vip-title-note" style="display:none;color:var(--gold2);font-size:6.5px;text-align:center;border:1px solid rgba(255,215,0,.3);padding:6px 12px;background:rgba(255,215,0,.05);">
+      👑 VIP: 목숨 5개 · +5000점 · 더블점프 · 대쉬 · 무기강화
+    </div>
+    <div style="color:#444;font-size:6px;text-align:center;line-height:2.6;max-width:320px;">
+      무한 스테이지 — 갈수록 강해진다!<br>
+      ✨ 반짝이는 구간 3타 → 🍖 스페셜 +10000점
+    </div>
+    <button class="start-btn" id="startBtn">▶ GAME START</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <button class="start-btn" id="btn-vip-info" style="font-size:6px;padding:7px 12px;">👑 VIP 안내</button>
+      <button class="start-btn" id="btn-lb-open" style="font-size:6px;padding:7px 12px;">🏆 리더보드</button>
+      <button class="start-btn" id="btn-att-open" style="font-size:6px;padding:7px 12px;">📅 출석</button>
+      <button class="start-btn" id="btn-ach-open" style="font-size:6px;padding:7px 12px;">🏆 업적</button>
+      <button class="start-btn" id="btn-coupon-open" style="font-size:6px;padding:7px 12px;">🎟️ 쿠폰</button>
+      <button class="start-btn" id="btn-invite-open" style="font-size:6px;padding:7px 12px;">🤝 친구초대</button>
+      <button class="start-btn" id="btn-settings-open" style="font-size:6px;padding:7px 12px;">⚙️ 설정</button>
+      <button class="start-btn" id="adminPanelBtn" style="font-size:6px;padding:7px 12px;display:none;">🔧 관리자</button>
+    </div>
+    <div id="hud-user-title" style="color:#444;font-size:6px;cursor:pointer;margin-top:2px;"></div>
+    <div style="color:#333;font-size:5.5px;text-align:center;line-height:2.4;">
+      ← → 이동 &nbsp;↑/Z 점프 &nbsp;Space/X 공격 &nbsp;<span style="color:#0cf">C 대쉬(VIP)</span>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div class="hud-section"><span class="hud-label">LIVES</span><span style="color:#fff" id="hud-lives">x3</span></div>
+    <div class="hud-section"><span class="hud-label">SCORE</span><span id="score-val">0000000</span></div>
+    <div class="hud-section"><span class="hud-label">HP</span>
+      <div id="energy-bar" style="display:flex;gap:2px;">
+        <span class="heart" id="h1">❤️</span><span class="heart" id="h2">❤️</span><span class="heart" id="h3">❤️</span>
+      </div>
+    </div>
+    <div class="hud-section"><span class="hud-label">CMB</span><span id="combo-hud" style="color:#888;">--</span></div>
+    <div class="hud-section"><span class="hud-label">ST</span><span style="color:#fff" id="hud-stage">1</span></div>
+    <div class="hud-section" id="weapon-hud" style="display:none">⚔️<span id="hud-weapon-lv">1</span></div>
+    <div class="hud-section" id="user-info-hud" title="로그아웃"></div>
+  </div>
+
+  <canvas id="c" width="800" height="420"></canvas>
+  <div id="boss-warn">⚠️ BOSS ⚠️</div>
+  <div id="item-notif"></div>
+  <div id="dash-indicator">💨 DASH READY!</div>
+  <div id="stage-banner"><h2 id="banner-title"></h2><p id="banner-sub"></p></div>
+
+  <!-- ── PAUSE SCREEN ── -->
+  <div id="pause-screen">
+    <h2>⏸ PAUSED</h2>
+    <div class="pause-sub">ESC 키로 재개</div>
+    <button class="pause-btn" id="btn-pause-resume">▶ 게임 재개</button>
+    <button class="pause-btn" id="btn-pause-settings">⚙️ 설정</button>
+    <button class="pause-btn red" id="btn-pause-quit">🏠 타이틀로</button>
+  </div>
+
+  <div class="overlay" id="gameover-screen">
+    <div style="font-size:46px">💀</div>
+    <h2 style="color:var(--red);font-size:17px;text-shadow:3px 3px 0 #800;">GAME OVER</h2>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:7px;color:#aaa;text-align:center;">
+      <div>STAGE <span id="go-stage" style="color:#fff">1</span></div>
+      <div>SCORE <span id="go-score" style="color:#fff">0</span></div>
+      <div>MAX COMBO <span id="go-combo" style="color:#f80">0</span></div>
+    </div>
+    <div class="blink" id="go-restart">[ SPACE / TAP 재시작 ]</div>
+    <button class="start-btn" id="go-lb-btn" style="font-size:6px;padding:7px 14px;margin-top:4px;">🏆 리더보드</button>
+  </div>
+
+  <!-- ── JOYSTICK MOBILE CONTROLS ── -->
+  <div id="mobile-ctrl">
+    <div id="joy-zone">
+      <div id="joy-base"></div><div id="joy-ring"></div>
+      <span class="joy-arrow up">▲</span><span class="joy-arrow dn">▼</span>
+      <span class="joy-arrow lt">◀</span><span class="joy-arrow rt">▶</span>
+      <div id="joy-stick"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+      <div id="joy-dir-indicator" style="font-size:7px;color:#444;font-family:'Press Start 2P',monospace;text-align:center;min-height:16px;"></div>
+      <div style="font-size:5px;color:#2a2a40;font-family:'Press Start 2P',monospace;text-align:center;line-height:2;">JOYSTICK<br>← → 이동<br>↑ 점프</div>
+    </div>
+    <div id="action-btns">
+      <div class="act-row">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <button class="act-btn" id="btn-jump">▲</button>
+          <div class="act-label">JUMP</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;" id="dash-btn-wrap">
+          <button class="act-btn" id="btn-dash">💨</button>
+          <div class="act-label">DASH</div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <button class="act-btn" id="btn-atk">⚔</button>
+          <div class="act-label">ATTACK</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchAuthTab(tab){
+  document.getElementById('panel-login').classList.toggle('active',tab==='login');
+  document.getElementById('panel-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('auth-err').textContent='';
+  document.getElementById('auth-ok').textContent='';
+}
+function openVipDashboard(){
+  refreshVipDashboard();
+  document.getElementById('vip-dashboard').style.display='flex';
+}
+function openLeaderboard(){
+  document.getElementById('leaderboard-modal').style.display='flex';
+  loadLeaderboard('all');
+}
+// weapon level management
+let _weaponLevel=1;
+function setWeaponLevel(lv){
+  _weaponLevel=lv;
+  window._weaponLevel=lv;
+  [1,2,3].forEach(i=>{
+    document.getElementById('wlv-'+i).classList.toggle('active',i===lv);
+  });
+  const descs={
+    1:'Lv1: 기본 공격 범위 48px / 데미지 1 / 이펙트 없음',
+    2:'Lv2: 공격 범위 72px / 데미지 2 / 불꽃 이펙트 + 넉백 강화',
+    3:'Lv3: 공격 범위 100px / 데미지 3 / 번개 이펙트 + 광역 판정'
+  };
+  document.getElementById('vd-weapdesc').textContent=descs[lv];
+  document.getElementById('vd-weaponlv').textContent='Lv'+lv;
+  document.getElementById('hud-weapon-lv').textContent=lv;
+  const btn=document.getElementById('vdash-upgrade-btn');
+  if(lv>=3){btn.textContent='⚔️ MAX 레벨 달성!';btn.disabled=true;}
+  else{btn.textContent='⚔️ Lv'+(lv+1)+' 강화 (다음 게임 적용)';btn.disabled=false;}
+}
+function upgradeWeapon(){
+  if(_weaponLevel<3){setWeaponLevel(_weaponLevel+1);showNotif('⚔️ 무기 Lv'+_weaponLevel+' 강화!','#f80',2000);}
+}
+function switchLbTab(tab){
+  document.getElementById('lb-tab-all').classList.toggle('active',tab==='all');
+  document.getElementById('lb-tab-weekly').classList.toggle('active',tab==='weekly');
+  document.getElementById('lb-tab-mine').classList.toggle('active',tab==='mine');
+  loadLeaderboard(tab);
+}
+</script>
+
+<!-- ── FIREBASE ── -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,doc,setDoc,getDoc,updateDoc,collection,getDocs,addDoc,query,orderBy,limit,where,deleteDoc,writeBatch,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyBAUZgHhBo6ovM1ZgrQdsKWlq58qXqT2X0",authDomain:"goindol2-b4bd4.firebaseapp.com",projectId:"goindol2-b4bd4",storageBucket:"goindol2-b4bd4.firebasestorage.app",messagingSenderId:"846971766779",appId:"1:846971766779:web:c4ef77074cd36fb0bb6d5e"};
+const app=initializeApp(cfg);const auth=getAuth(app);const db=getFirestore(app);
+const ADMINS=["admin@goindol.com","master@goindol.com"];
+window._auth=auth;window._db=db;
+
+// ── SCORE SAVE ──
+window.saveScore=async function(score,stage,maxCombo){
+  const user=window._currentUser;if(!user)return;
+  try{
+    // scores 컬렉션에 추가
+    await addDoc(collection(db,'scores'),{
+      uid:user.uid,name:user.displayName||user.email,email:user.email,
+      vip:window._isVIP||false,score,stage,maxCombo,playedAt:Date.now()
+    });
+    // 유저 도큐먼트 통계 갱신
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const udata=ud.exists()?ud.data():{};
+    const plays=(udata.plays||0)+1;
+    const bestScore=Math.max(score,udata.bestScore||0);
+    const bestStage=Math.max(stage,udata.bestStage||0);
+    const bestCombo=Math.max(maxCombo,udata.bestCombo||0);
+    await updateDoc(doc(db,'users',user.uid),{plays,bestScore,bestStage,bestCombo});
+  }catch(ex){console.warn('saveScore err',ex);}
+};
+
+// ── LEADERBOARD LOAD ──
+window.loadLeaderboard=async function(tab='all'){
+  const el=document.getElementById('lb-list');
+  el.innerHTML='<div class="lb-loading">불러오는 중...</div>';
+  try{
+    let q;
+    if(tab==='mine'&&window._currentUser){
+      q=query(collection(db,'scores'),where('uid','==',window._currentUser.uid),orderBy('score','desc'),limit(20));
+    }else if(tab==='weekly'){
+      const weekAgo=Date.now()-7*24*60*60*1000;
+      q=query(collection(db,'scores'),where('playedAt','>=',weekAgo),orderBy('playedAt','desc'),orderBy('score','desc'),limit(20));
+    }else{
+      q=query(collection(db,'scores'),orderBy('score','desc'),limit(50));
+    }
+    const snap=await getDocs(q);
+    if(snap.empty){el.innerHTML='<div class="lb-empty">아직 기록이 없어요!</div>';return;}
+    let html='';let rank=1;
+    snap.forEach(d=>{
+      const data=d.data();
+      const isMe=window._currentUser&&data.uid===window._currentUser.uid;
+      const rankCls=rank===1?'top1':rank===2?'top2':rank===3?'top3':'';
+      const rankTxt=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+      const vipTag=data.vip?'<span class="vip-tag"> 👑</span>':'';
+      const dt=data.playedAt?new Date(data.playedAt).toLocaleDateString('ko-KR'):'';
+      html+=`<div class="lb-row${isMe?' me':''}">
+        <div class="lb-rank ${rankCls}">${rankTxt}</div>
+        <div class="lb-name">${escHtml(data.name||'??')}${vipTag}<br><span style="color:#333;font-size:5px;">${dt}</span></div>
+        <div class="lb-stage">S${data.stage||1}</div>
+        <div class="lb-score">${String(data.score||0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div>
+      </div>`;
+      rank++;
+    });
+    el.innerHTML=html;
+  }catch(ex){el.innerHTML='<div class="lb-empty">오류: '+escHtml(ex.message)+'</div>';}
+};
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ══════════════════════════════
+// ── ACHIEVEMENTS SYSTEM ──
+// ══════════════════════════════
+const ACH_DEFS=[
+  {id:'first_play',icon:'🎮',name:'첫 발걸음',desc:'처음 게임 플레이',req:v=>v.plays>=1,reward:'칭호: 초보자'},
+  {id:'play10',icon:'🔁',name:'10판 클리어',desc:'10번 플레이',req:v=>v.plays>=10,reward:'+1000점'},
+  {id:'play50',icon:'⚔️',name:'베테랑',desc:'50번 플레이',req:v=>v.plays>=50,reward:'칭호: 베테랑'},
+  {id:'score10k',icon:'💰',name:'만점 돌파',desc:'점수 10,000 달성',req:v=>(v.bestScore||0)>=10000,reward:'+500점'},
+  {id:'score100k',icon:'💎',name:'십만 점수',desc:'점수 100,000 달성',req:v=>(v.bestScore||0)>=100000,reward:'칭호: 달인'},
+  {id:'score1m',icon:'👑',name:'백만장자',desc:'점수 1,000,000 달성',req:v=>(v.bestScore||0)>=1000000,reward:'칭호: 전설'},
+  {id:'stage10',icon:'🗺️',name:'탐험가',desc:'스테이지 10 도달',req:v=>(v.bestStage||0)>=10,reward:'+2000점'},
+  {id:'stage30',icon:'🌋',name:'정복자',desc:'스테이지 30 도달',req:v=>(v.bestStage||0)>=30,reward:'칭호: 정복자'},
+  {id:'stage50',icon:'🚀',name:'전설의 탐험가',desc:'스테이지 50 도달',req:v=>(v.bestStage||0)>=50,reward:'칭호: 영웅'},
+  {id:'combo10',icon:'🔥',name:'콤보 마스터',desc:'10 콤보 달성',req:v=>(v.bestCombo||0)>=10,reward:'+1500점'},
+  {id:'combo20',icon:'💥',name:'콤보 신',desc:'20 콤보 달성',req:v=>(v.bestCombo||0)>=20,reward:'칭호: 콤보왕'},
+  {id:'att7',icon:'📅',name:'주간 출석',desc:'7일 연속 출석',req:v=>(v.attStreak||0)>=7,reward:'+5000점'},
+  {id:'att30',icon:'🏅',name:'개근상',desc:'30일 연속 출석',req:v=>(v.attStreak||0)>=30,reward:'칭호: 개근왕'},
+];
+const TITLE_PRIORITY=['전설','영웅','달인','개근왕','콤보왕','정복자','베테랑','초보자'];
+
+window.checkAchievements=async function(udata){
+  const user=window._currentUser;if(!user)return;
+  const done=udata.achievements||{};
+  let newDone={};let bonusScore=0;let newTitle=null;
+  for(const a of ACH_DEFS){
+    if(!done[a.id]&&a.req(udata)){
+      newDone[a.id]=Date.now();
+      showAchPopup(a);
+      if(a.reward.includes('점')){bonusScore+=parseInt(a.reward.replace(/[^0-9]/g,''))||0;}
+      if(a.reward.startsWith('칭호:')){newTitle=a.reward.replace('칭호:','').trim();}
+    }
+  }
+  if(Object.keys(newDone).length>0){
+    const merged={...done,...newDone};
+    // pick best title
+    const allTitles=ACH_DEFS.filter(a=>merged[a.id]&&a.reward.startsWith('칭호:')).map(a=>a.reward.replace('칭호:','').trim());
+    const bestTitle=TITLE_PRIORITY.find(t=>allTitles.includes(t))||udata.title||'';
+    await updateDoc(doc(db,'users',user.uid),{achievements:merged,title:bestTitle});
+    window._userTitle=bestTitle;
+    if(bonusScore>0&&typeof score!=='undefined'){score+=bonusScore;if(typeof updateHUD==='function')updateHUD();}
+  }
+};
+function showAchPopup(a){
+  const pop=document.getElementById('ach-popup');
+  document.getElementById('ap-icon').textContent=a.icon;
+  document.getElementById('ap-name').textContent=a.name;
+  pop.style.display='flex';clearTimeout(pop._t);pop._t=setTimeout(()=>pop.style.display='none',3000);
+}
+window.openAchModal=async function(){
+  const user=window._currentUser;if(!user)return;
+  const ud=await getDoc(doc(db,'users',user.uid));
+  const udata=ud.exists()?ud.data():{};
+  const done=udata.achievements||{};
+  const title=udata.title||'없음';
+  document.getElementById('ach-title-display').textContent='현재 칭호: '+title;
+  let html='';
+  for(const a of ACH_DEFS){
+    const isDone=!!done[a.id];
+    // calculate progress
+    let prog=0,progMax=1;
+    if(a.id==='play10'||a.id==='first_play'){prog=Math.min(udata.plays||0,a.id==='first_play'?1:10);progMax=a.id==='first_play'?1:10;}
+    else if(a.id==='play50'){prog=Math.min(udata.plays||0,50);progMax=50;}
+    else if(a.id.startsWith('score')){const t=parseInt(a.id.replace('score','').replace('k','000').replace('m','000000'));prog=Math.min(udata.bestScore||0,t);progMax=t;}
+    else if(a.id.startsWith('stage')){const t=parseInt(a.id.replace('stage',''));prog=Math.min(udata.bestStage||0,t);progMax=t;}
+    else if(a.id.startsWith('combo')){const t=parseInt(a.id.replace('combo',''));prog=Math.min(udata.bestCombo||0,t);progMax=t;}
+    else if(a.id.startsWith('att')){const t=parseInt(a.id.replace('att',''));prog=Math.min(udata.attStreak||0,t);progMax=t;}
+    const pct=Math.min(100,Math.floor(prog/progMax*100));
+    html+=`<div class="ach-item${isDone?' done':''}">
+      <div class="ach-icon">${isDone?a.icon:'❓'}</div>
+      <div class="ach-name">${isDone?a.name:'???'}</div>
+      <div class="ach-desc">${isDone?a.desc:'???'}</div>
+      <div class="ach-prog"><div class="ach-prog-bar" style="width:${pct}%"></div></div>
+      <div class="ach-reward">${isDone?'✅ '+a.reward:'🔒 미달성'}</div>
+    </div>`;
+  }
+  document.getElementById('ach-grid').innerHTML=html;
+  document.getElementById('ach-modal').style.display='flex';
+};
+
+// ══════════════════════════════
+// ── ATTENDANCE SYSTEM ──
+// ══════════════════════════════
+const ATT_REWARDS=[500,500,1000,1000,2000,2000,5000]; // day 1~7 score bonus
+window.openAttModal=async function(){
+  const user=window._currentUser;if(!user)return;
+  const ud=await getDoc(doc(db,'users',user.uid));
+  const udata=ud.exists()?ud.data():{};
+  const streak=udata.attStreak||0;
+  const lastAtt=udata.lastAtt||0;
+  const today=new Date();today.setHours(0,0,0,0);
+  const checkedToday=lastAtt>=today.getTime();
+  document.getElementById('att-streak').textContent='연속 출석: '+streak+'일 🔥';
+  // build 7-day grid
+  let html='';
+  for(let i=1;i<=7;i++){
+    const reward=ATT_REWARDS[i-1];
+    const isChecked=streak>=i;
+    const isToday=streak%7===i-1&&!checkedToday||streak%7===i&&checkedToday;
+    const dayClass=isChecked?'checked':(streak%7===i-1&&!checkedToday?'today':'');
+    html+=`<div class="att-day ${dayClass}"><div class="att-day-num">${i}일</div><div class="att-reward">+${reward>=1000?reward/1000+'K':reward}</div></div>`;
+  }
+  document.getElementById('att-grid').innerHTML=html;
+  const btn=document.getElementById('att-claim-btn');
+  btn.disabled=checkedToday;
+  btn.textContent=checkedToday?'✅ 오늘 출석 완료!':'✅ 오늘 출석 체크!';
+  document.getElementById('att-msg').textContent='';
+  document.getElementById('att-modal').style.display='flex';
+};
+document.getElementById('att-claim-btn').onclick=async function(){
+  const user=window._currentUser;if(!user)return;
+  const ud=await getDoc(doc(db,'users',user.uid));
+  const udata=ud.exists()?ud.data():{};
+  const today=new Date();today.setHours(0,0,0,0);
+  const yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);
+  const lastAtt=udata.lastAtt||0;
+  if(lastAtt>=today.getTime()){document.getElementById('att-msg').textContent='이미 오늘 출석했어요!';return;}
+  const isConsecutive=lastAtt>=yesterday.getTime();
+  const newStreak=isConsecutive?(udata.attStreak||0)+1:1;
+  const rewardIdx=(newStreak-1)%7;
+  const bonus=ATT_REWARDS[rewardIdx];
+  const newBest=Math.max(udata.bestScore||0,udata.bestScore||0);
+  await updateDoc(doc(db,'users',user.uid),{attStreak:newStreak,lastAtt:today.getTime()});
+  // bonus score in current game if playing
+  if(typeof score!=='undefined'&&typeof gs!=='undefined'&&gs==='playing'){score+=bonus;if(typeof updateHUD==='function')updateHUD();}
+  document.getElementById('att-msg').textContent=`🎉 출석 완료! +${bonus}점 보너스! (${newStreak}일 연속)`;
+  document.getElementById('att-claim-btn').disabled=true;
+  document.getElementById('att-claim-btn').textContent='✅ 오늘 출석 완료!';
+  document.getElementById('att-streak').textContent='연속 출석: '+newStreak+'일 🔥';
+  await window.checkAchievements({...udata,attStreak:newStreak});
+};
+
+// ══════════════════════════════
+// ── COUPON SYSTEM ──
+// ══════════════════════════════
+window.useCoupon=async function(){
+  const code=document.getElementById('coupon-input').value.trim().toUpperCase();
+  const msg=document.getElementById('coupon-msg');
+  const user=window._currentUser;
+  if(!user){msg.style.color='#f55';msg.textContent='로그인 필요';return;}
+  if(!code){msg.style.color='#f55';msg.textContent='코드를 입력하세요';return;}
+  msg.style.color='#aaa';msg.textContent='확인 중...';
+  try{
+    const cDoc=await getDoc(doc(db,'coupons',code));
+    if(!cDoc.exists()){msg.style.color='#f55';msg.textContent='❌ 존재하지 않는 코드';return;}
+    const cdata=cDoc.data();
+    if(cdata.used&&cdata.usedBy!==user.uid){msg.style.color='#f55';msg.textContent='❌ 이미 사용된 코드';return;}
+    if(cdata.usedBy===user.uid){msg.style.color='#f55';msg.textContent='❌ 이미 사용한 코드';return;}
+    // apply reward
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const udata=ud.exists()?ud.data():{};
+    let rewardMsg='';
+    if(cdata.type==='vip'){await updateDoc(doc(db,'users',user.uid),{vip:true});window._isVIP=true;rewardMsg='VIP 1개월 적용!';}
+    else if(cdata.type==='vipp'){await updateDoc(doc(db,'users',user.uid),{vip:true,vipp:true});window._isVIP=true;window._isVIPP=true;rewardMsg='VIP+ 1개월 적용!';}
+    else if(cdata.type==='score10k'){if(typeof score!=='undefined'&&gs==='playing'){score+=10000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+10,000점!';}
+    else if(cdata.type==='score50k'){if(typeof score!=='undefined'&&gs==='playing'){score+=50000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+50,000점!';}
+    else if(cdata.type==='score100k'){if(typeof score!=='undefined'&&gs==='playing'){score+=100000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+100,000점!';}
+    await updateDoc(doc(db,'coupons',code),{used:true,usedBy:user.uid,usedAt:Date.now()});
+    msg.style.color='#0f0';msg.textContent='🎉 쿠폰 사용 완료! '+rewardMsg;
+    document.getElementById('coupon-input').value='';
+  }catch(ex){msg.style.color='#f55';msg.textContent='오류: '+ex.message;}
+};
+
+// ══════════════════════════════
+// ── NOTICE SYSTEM ──
+// ══════════════════════════════
+window.loadNotice=async function(){
+  try{
+    const nd=await getDoc(doc(db,'system','notice'));
+    if(nd.exists()&&nd.data().text){
+      document.getElementById('notice-text').innerHTML='📢 '+nd.data().text.replace(/ /g,'&nbsp;');
+      document.getElementById('notice-banner').style.display='flex';
+    }
+  }catch(ex){}
+};
+
+window.refreshVipDashboard=async function(){
+  const user=window._currentUser;if(!user)return;
+  try{
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const d=ud.exists()?ud.data():{};
+    document.getElementById('vd-bestscore').textContent=String(d.bestScore||0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    document.getElementById('vd-beststage').textContent=d.bestStage||0;
+    document.getElementById('vd-maxcombo').textContent=d.bestCombo||0;
+    document.getElementById('vd-plays').textContent=d.plays||0;
+  }catch(ex){console.warn('dashboard refresh err',ex);}
+};
+
+async function doLogin(){
+  const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-pw').value,err=document.getElementById('auth-err');
+  err.textContent='';if(!e||!p){err.textContent='이메일과 비밀번호를 입력하세요';return;}
+  try{await signInWithEmailAndPassword(auth,e,p);}
+  catch(ex){const m={'auth/user-not-found':'가입된 계정이 없습니다','auth/wrong-password':'비밀번호가 틀렸습니다','auth/invalid-email':'이메일 형식 오류','auth/invalid-credential':'이메일 또는 비밀번호 오류'};err.textContent=m[ex.code]||ex.message;}
+}
+async function doSignup(){
+  const n=document.getElementById('su-name').value.trim(),e=document.getElementById('su-email').value.trim(),p=document.getElementById('su-pw').value;
+  const err=document.getElementById('auth-err'),ok=document.getElementById('auth-ok');
+  err.textContent='';ok.textContent='';
+  if(!n){err.textContent='닉네임을 입력하세요';return;}
+  if(!e||!p){err.textContent='이메일과 비밀번호를 입력하세요';return;}
+  if(p.length<6){err.textContent='비밀번호는 6자 이상';return;}
+  try{
+    const c=await createUserWithEmailAndPassword(auth,e,p);
+    await updateProfile(c.user,{displayName:n});
+    await setDoc(doc(db,'users',c.user.uid),{email:e,name:n,vip:false,plays:0,bestScore:0,bestStage:0,bestCombo:0,createdAt:Date.now()});
+    ok.textContent='가입 완료! 환영합니다 '+n+'님 👋';
+  }catch(ex){const m={'auth/email-already-in-use':'이미 사용 중인 이메일','auth/invalid-email':'이메일 형식 오류'};err.textContent=m[ex.code]||ex.message;}
+}
+async function doLogout(){if(!confirm('로그아웃 하시겠어요?'))return;await signOut(auth);}
+async function adminSendNotice(){
+  const text=document.getElementById('admin-notice-text').value;
+  const msg=document.getElementById('admin-msg');
+  if(!text){msg.textContent='❌ 공지 내용을 입력하세요';return;}
+  try{await setDoc(doc(db,'system','notice'),{text,updatedAt:Date.now()});msg.textContent='✅ 공지 발송 완료';document.getElementById('notice-text').innerHTML='📢 '+text.replace(/ /g,'&nbsp;');document.getElementById('notice-banner').style.display='flex';}
+  catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminClearNotice(){
+  try{await setDoc(doc(db,'system','notice'),{text:'',updatedAt:Date.now()});document.getElementById('notice-banner').style.display='none';document.getElementById('admin-msg').textContent='✅ 공지 삭제';}
+  catch(ex){document.getElementById('admin-msg').textContent='오류: '+ex.message;}
+}
+async function adminGiveScore(){
+  const email=document.getElementById('admin-score-email').value.trim();
+  const val=parseInt(document.getElementById('admin-score-val').value)||0;
+  const msg=document.getElementById('admin-msg');
+  if(!email||!val){msg.textContent='❌ 이메일과 점수를 입력하세요';return;}
+  try{
+    const s=await getDocs(collection(db,'users'));let found=false;
+    for(const u of s.docs){if(u.data().email===email){const cur=u.data().bestScore||0;await updateDoc(doc(db,'users',u.id),{bestScore:cur+val});found=true;break;}}
+    msg.textContent=found?`✅ ${email} +${val}점 부여`:'❌ 유저 없음';
+  }catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminCreateCoupon(){
+  const code=document.getElementById('admin-coupon-code').value.trim().toUpperCase();
+  const type=document.getElementById('admin-coupon-type').value;
+  const msg=document.getElementById('admin-msg');
+  if(!code||code.length<4){msg.textContent='❌ 코드는 4자 이상';return;}
+  try{
+    await setDoc(doc(db,'coupons',code),{type,used:false,createdAt:Date.now(),createdBy:window._currentUser?.email});
+    msg.textContent='✅ 쿠폰 ['+code+'] 생성 완료 ('+type+')';
+    document.getElementById('admin-coupon-code').value='';
+  }catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminLoadStats(){
+  try{
+    const us=await getDocs(collection(db,'users'));
+    const sc=await getDocs(collection(db,'scores'));
+    let vipCnt=0,vippCnt=0;
+    us.forEach(u=>{if(u.data().vipp)vippCnt++;else if(u.data().vip)vipCnt++;});
+    document.getElementById('ast-users').textContent=us.size;
+    document.getElementById('ast-vip').textContent=vipCnt;
+    document.getElementById('ast-vipp').textContent=vippCnt;
+    document.getElementById('ast-scores').textContent=sc.size;
+    await countOnlineUsers();
+  }catch(ex){}
+}
+async function adminTimeBan(){
+  const email=document.getElementById('admin-ban-email').value.trim();
+  const mins=parseInt(document.getElementById('admin-ban-minutes').value)||0;
+  const msg=document.getElementById('admin-msg');
+  if(!email){msg.textContent='❌ 이메일을 입력하세요';return;}
+  if(mins<1){msg.textContent='❌ 밴 시간(분)을 입력하세요';return;}
+  msg.textContent='처리 중...';
+  try{
+    const s=await getDocs(collection(db,'users'));let found=false;
+    for(const u of s.docs){
+      if(u.data().email===email){
+        const until=Date.now()+mins*60*1000;
+        await updateDoc(doc(db,'users',u.id),{banned:true,banUntil:until});
+        found=true;break;
+      }
+    }
+    msg.textContent=found?`🔨 ${email} ${mins}분 타임밴 완료`:'❌ 유저 없음';
+    loadAdminUsers();
+  }catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminUnBan(){
+  const email=document.getElementById('admin-ban-email').value.trim();
+  const msg=document.getElementById('admin-msg');
+  if(!email){msg.textContent='❌ 이메일을 입력하세요';return;}
+  msg.textContent='처리 중...';
+  try{
+    const s=await getDocs(collection(db,'users'));let found=false;
+    for(const u of s.docs){
+      if(u.data().email===email){
+        await updateDoc(doc(db,'users',u.id),{banned:false,banUntil:0});
+        found=true;break;
+      }
+    }
+    msg.textContent=found?`✅ ${email} 밴 해제`:'❌ 유저 없음';
+    loadAdminUsers();
+  }catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminGrant(){
+  const email=document.getElementById('admin-target-email').value.trim(),msg=document.getElementById('admin-msg');
+  msg.textContent='처리 중...';
+  try{const s=await getDocs(collection(db,'users'));let found=false;for(const u of s.docs){if(u.data().email===email){await updateDoc(doc(db,'users',u.id),{vip:true,vipAt:Date.now()});found=true;break;}}msg.textContent=found?`✅ ${email} VIP 부여`:'❌ 유저 없음';loadAdminUsers();}
+  catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminRevoke(){
+  const email=document.getElementById('admin-target-email').value.trim(),msg=document.getElementById('admin-msg');
+  msg.textContent='처리 중...';
+  try{const s=await getDocs(collection(db,'users'));let found=false;for(const u of s.docs){if(u.data().email===email){await updateDoc(doc(db,'users',u.id),{vip:false});found=true;break;}}msg.textContent=found?`✅ ${email} VIP 회수`:'❌ 유저 없음';loadAdminUsers();}
+  catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminGrantVipp(){
+  const email=document.getElementById('admin-target-email').value.trim(),msg=document.getElementById('admin-msg');
+  msg.textContent='처리 중...';
+  try{const s=await getDocs(collection(db,'users'));let found=false;for(const u of s.docs){if(u.data().email===email){await updateDoc(doc(db,'users',u.id),{vipp:true,vip:true,vippAt:Date.now()});found=true;break;}}msg.textContent=found?`✅ ${email} VIP+ 부여`:'❌ 유저 없음';loadAdminUsers();}
+  catch(ex){msg.textContent='오류: '+ex.message;}
+}
+async function adminRevokeVipp(){
+  const email=document.getElementById('admin-target-email').value.trim(),msg=document.getElementById('admin-msg');
+  msg.textContent='처리 중...';
+  try{const s=await getDocs(collection(db,'users'));let found=false;for(const u of s.docs){if(u.data().email===email){await updateDoc(doc(db,'users',u.id),{vipp:false});found=true;break;}}msg.textContent=found?`✅ ${email} VIP+ 회수`:'❌ 유저 없음';loadAdminUsers();}
+  catch(ex){msg.textContent='오류: '+ex.message;}
+}
+
+// ── 점수 기록 삭제 ──
+async function adminDeleteScores(){
+  const email=document.getElementById('admin-delscore-email').value.trim();
+  const msg=document.getElementById('admin-msg');
+  if(!email){msg.textContent='❌ 이메일을 입력하세요';return;}
+  if(!confirm(`${email}의 모든 점수 기록을 삭제하시겠습니까?`)){return;}
+  msg.textContent='삭제 중...';
+  try{
+    const q=query(collection(db,'scores'),where('email','==',email));
+    const snap=await getDocs(q);
+    if(snap.empty){msg.textContent='❌ 기록 없음';return;}
+    const batch=writeBatch(db);
+    snap.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+    // bestScore도 초기화
+    const us=await getDocs(collection(db,'users'));
+    for(const u of us.docs){if(u.data().email===email){await updateDoc(doc(db,'users',u.id),{bestScore:0,bestStage:0,bestCombo:0,plays:0});break;}}
+    msg.textContent=`🗑️ ${email} 점수 ${snap.size}건 삭제 완료`;
+  }catch(ex){msg.textContent='오류: '+ex.message;}
+}
+document.getElementById('btn-del-scores').onclick=adminDeleteScores;
+
+// ── 쿠폰 사용 내역 ──
+async function loadCouponLog(){
+  const el=document.getElementById('admin-coupon-log');
+  el.innerHTML='불러오는 중...';
+  try{
+    const snap=await getDocs(collection(db,'coupons'));
+    if(snap.empty){el.innerHTML='쿠폰 없음';return;}
+    let h='';
+    snap.forEach(d=>{
+      const c=d.data();
+      const usedAt=c.usedAt?new Date(c.usedAt).toLocaleDateString('ko-KR'):'';
+      const statusColor=c.used?'#f80':'#0f0';
+      const status=c.used?`<span style="color:#f80">사용됨 (${escHtml(c.usedBy||'?')}) ${usedAt}</span>`:'<span style="color:#0f0">미사용</span>';
+      h+=`<div class="user-row"><span style="color:#aaa;">[${escHtml(d.id)}] ${escHtml(c.type||'?')}</span><span>${status}</span></div>`;
+    });
+    el.innerHTML=h||'내역 없음';
+  }catch(ex){el.innerHTML='오류: '+ex.message;}
+}
+document.getElementById('btn-coupon-log-refresh').onclick=loadCouponLog;
+
+// ── 실시간 접속자 (presense) ──
+async function updateOnlinePresence(){
+  const user=window._currentUser;if(!user)return;
+  try{
+    await setDoc(doc(db,'online',user.uid),{uid:user.uid,name:user.displayName||user.email,at:Date.now()},{merge:true});
+  }catch(ex){}
+}
+async function countOnlineUsers(){
+  try{
+    const cutoff=Date.now()-5*60*1000; // 5분 이내
+    const snap=await getDocs(collection(db,'online'));
+    let cnt=0;
+    snap.forEach(d=>{if((d.data().at||0)>cutoff)cnt++;});
+    const el=document.getElementById('ast-online');
+    if(el)el.textContent=cnt;
+  }catch(ex){}
+}
+// 30초마다 presence 갱신
+setInterval(()=>{updateOnlinePresence();},30000);
+
+// ── 초대 코드 시스템 ──
+window.loadInviteStats=async function(){
+  const user=window._currentUser;if(!user)return;
+  try{
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const d=ud.exists()?ud.data():{};
+    const cnt=d.invitedCount||0;
+    const bonus=(d.inviteBonus||0);
+    document.getElementById('invite-count').textContent=cnt;
+    document.getElementById('invite-bonus').textContent=String(bonus).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  }catch(ex){}
+};
+window.useInviteCode=async function(){
+  const user=window._currentUser;
+  const code=document.getElementById('invite-code-input').value.trim().toUpperCase();
+  const msg=document.getElementById('invite-msg');
+  if(!user){msg.style.color='#f55';msg.textContent='로그인 필요';return;}
+  if(!code||code.length<4){msg.style.color='#f55';msg.textContent='코드를 입력하세요';return;}
+  // 자기 자신 코드 방지
+  const myCode=makeInviteCode(user.uid);
+  if(code===myCode){msg.style.color='#f55';msg.textContent='❌ 자신의 코드는 사용 불가';return;}
+  msg.style.color='#aaa';msg.textContent='확인 중...';
+  try{
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const udata=ud.exists()?ud.data():{};
+    if(udata.usedInviteCode){msg.style.color='#f55';msg.textContent='❌ 이미 초대 코드를 사용했습니다';return;}
+    // 코드를 가진 유저 찾기
+    const allUsers=await getDocs(collection(db,'users'));
+    let inviterDoc=null,inviterId=null;
+    allUsers.forEach(u=>{
+      if(makeInviteCode(u.id)===code){inviterDoc=u.data();inviterId=u.id;}
+    });
+    if(!inviterId){msg.style.color='#f55';msg.textContent='❌ 존재하지 않는 코드';return;}
+    // 초대받은 사람 +1000점
+    await updateDoc(doc(db,'users',user.uid),{usedInviteCode:code,inviteBonus:(udata.inviteBonus||0)+1000});
+    // 초대한 사람 +3000점, 초대 수 +1
+    const invCnt=(inviterDoc.invitedCount||0)+1;
+    const invBonus=(inviterDoc.inviteBonus||0)+3000;
+    await updateDoc(doc(db,'users',inviterId),{invitedCount:invCnt,inviteBonus:invBonus});
+    msg.style.color='#0f0';msg.textContent='🎉 초대 코드 사용 완료! +1,000점 적용!';
+    document.getElementById('invite-code-input').value='';
+    window.loadInviteStats&&window.loadInviteStats();
+  }catch(ex){msg.style.color='#f55';msg.textContent='오류: '+ex.message;}
+};
+async function loadAdminUsers(){
+  const el=document.getElementById('admin-user-list');el.innerHTML='불러오는 중...';
+  try{
+    const s=await getDocs(collection(db,'users'));
+    if(s.empty){el.innerHTML='유저 없음';return;}
+    let h='';
+    s.forEach(u=>{
+      const d=u.data();
+      const tag=d.vipp?'<span class="user-vip">💜 VIP+</span>':d.vip?'<span class="user-vip">👑 VIP</span>':'<span class="user-normal">일반</span>';
+      const now=Date.now();
+      const isBanned=d.banned&&d.banUntil&&d.banUntil>now;
+      const banLeft=isBanned?Math.ceil((d.banUntil-now)/60000)+'분 남음':'';
+      const banTag=isBanned?`<span style="color:#f55;font-size:5.5px;">🔨 밴(${banLeft})</span>`:'';
+      h+=`<div class="user-row"><span>${escHtml(d.name||'?')} (${escHtml(d.email)})</span><span style="display:flex;gap:4px;align-items:center;">${tag}${banTag}</span></div>`;
+    });
+    el.innerHTML=h;
+  }catch(ex){el.innerHTML='오류: '+ex.message;}
+}
+
+document.getElementById('btn-grant-vip').onclick=adminGrant;
+document.getElementById('btn-revoke-vip').onclick=adminRevoke;
+document.getElementById('btn-timeban').onclick=adminTimeBan;
+document.getElementById('btn-unban').onclick=adminUnBan;
+// VIP+ 버튼 동적으로 추가
+(function(){
+  const adminBox=document.querySelector('.admin-box');
+  const refDiv=document.getElementById('btn-admin-refresh').parentNode;
+  const div=document.createElement('div');div.style.color='#666';div.style.fontSize='6px';div.textContent='VIP+ 부여 / 회수';
+  const row=document.createElement('div');row.className='admin-row';
+  const g=document.createElement('button');g.className='admin-btn';g.style.background='#6600cc';g.textContent='VIP+ 부여';g.onclick=adminGrantVipp;
+  const r=document.createElement('button');r.className='admin-btn';r.style.background='#440066';r.textContent='VIP+ 회수';r.onclick=adminRevokeVipp;
+  row.appendChild(g);row.appendChild(r);
+  adminBox.insertBefore(div,refDiv);
+  adminBox.insertBefore(row,refDiv);
+})();
+document.getElementById('btn-vip-close').onclick=()=>document.getElementById('vip-modal').style.display='none';
+document.getElementById('btn-vipp-close').onclick=()=>document.getElementById('vipp-modal').style.display='none';
+document.getElementById('btn-settings-open').onclick=()=>document.getElementById('settings-modal').style.display='flex';
+document.getElementById('btn-invite-open').onclick=()=>{openInviteModal();document.getElementById('invite-modal').style.display='flex';};
+document.getElementById('btn-invite-submit').onclick=()=>window.useInviteCode&&window.useInviteCode();
+document.getElementById('invite-code-input').onkeydown=e=>{if(e.key==='Enter')window.useInviteCode&&window.useInviteCode();};
+
+// 볼륨 슬라이더
+window._sfxVol=0.8;
+document.getElementById('sfx-vol').oninput=function(){
+  window._sfxVol=this.value/100;
+  document.getElementById('sfx-vol-val').textContent=this.value+'%';
+};
+
+// 일시정지
+function togglePause(){
+  if(typeof gs==='undefined')return;
+  if(gs==='playing'){gs='paused';document.getElementById('pause-screen').style.display='flex';}
+  else if(gs==='paused'){gs='playing';document.getElementById('pause-screen').style.display='none';}
+}
+document.getElementById('btn-pause-resume').onclick=()=>{gs='playing';document.getElementById('pause-screen').style.display='none';};
+document.getElementById('btn-pause-settings').onclick=()=>document.getElementById('settings-modal').style.display='flex';
+document.getElementById('btn-pause-quit').onclick=()=>{
+  gs='title';
+  document.getElementById('pause-screen').style.display='none';
+  document.getElementById('title-screen').style.display='flex';
+};
+
+// 초대 모달 열기
+function openInviteModal(){
+  const user=window._currentUser;if(!user)return;
+  const code=makeInviteCode(user.uid);
+  document.getElementById('invite-code-display').textContent=code;
+  window.loadInviteStats&&window.loadInviteStats();
+}
+function makeInviteCode(uid){
+  return (uid.replace(/[^a-zA-Z0-9]/g,'').substring(0,6)).toUpperCase();
+}
+window.makeInviteCode=makeInviteCode;
+window.copyInviteCode=function(){
+  const code=document.getElementById('invite-code-display').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(code);}
+  const msg=document.getElementById('invite-msg');
+  msg.textContent='✅ 코드가 복사되었습니다!';setTimeout(()=>msg.textContent='',2000);
+};
+document.getElementById('btn-login').onclick=doLogin;
+document.getElementById('btn-signup').onclick=doSignup;
+document.getElementById('login-pw').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+document.getElementById('su-pw').onkeydown=e=>{if(e.key==='Enter')doSignup();};
+document.getElementById('btn-vip-info').onclick=()=>document.getElementById('vip-modal').style.display='flex';
+document.getElementById('btn-vdash-close').onclick=()=>document.getElementById('vip-dashboard').style.display='none';
+document.getElementById('btn-lb-close').onclick=()=>document.getElementById('leaderboard-modal').style.display='none';
+document.getElementById('btn-lb-open').onclick=openLeaderboard;
+document.getElementById('go-lb-btn').onclick=openLeaderboard;
+document.getElementById('btn-att-open').onclick=()=>window.openAttModal&&window.openAttModal();
+document.getElementById('btn-ach-open').onclick=()=>window.openAchModal&&window.openAchModal();
+document.getElementById('btn-coupon-open').onclick=()=>document.getElementById('coupon-modal').style.display='flex';
+document.getElementById('coupon-submit').onclick=()=>window.useCoupon&&window.useCoupon();
+document.getElementById('coupon-input').onkeydown=e=>{if(e.key==='Enter')window.useCoupon&&window.useCoupon();};
+document.getElementById('adminPanelBtn').onclick=()=>{document.getElementById('admin-panel').style.display='flex';loadAdminUsers();adminLoadStats();loadCouponLog();};
+document.getElementById('btn-admin-refresh').onclick=()=>{loadAdminUsers();adminLoadStats();};
+document.getElementById('btn-admin-close').onclick=()=>document.getElementById('admin-panel').style.display='none';
+document.getElementById('btn-send-notice').onclick=adminSendNotice;
+document.getElementById('btn-clear-notice').onclick=adminClearNotice;
+document.getElementById('btn-give-score').onclick=adminGiveScore;
+document.getElementById('btn-create-coupon').onclick=adminCreateCoupon;
+document.getElementById('btn-grant-vip').onclick=adminGrant;
+document.getElementById('btn-revoke-vip').onclick=adminRevoke;
+document.getElementById('btn-timeban').onclick=adminTimeBan;
+document.getElementById('btn-unban').onclick=adminUnBan;
+document.getElementById('hud-user-title').onclick=doLogout;
+document.getElementById('user-info-hud').onclick=doLogout;
+// VIP+ 타이틀 안내 버튼 추가
+(function(){
+  const btnRow=document.querySelector('#title-screen div[style*="display:flex;gap:8px"]');
+  if(btnRow){const b=document.createElement('button');b.className='start-btn';b.style.cssText='font-size:6px;padding:7px 12px;border-color:#cc44ff;color:#cc44ff;';b.textContent='💜 VIP+ 안내';b.onclick=()=>document.getElementById('vipp-modal').style.display='flex';btnRow.appendChild(b);}
+})();
+
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    window._currentUser=user;
+    const ud=await getDoc(doc(db,'users',user.uid));
+    const udata=ud.exists()?ud.data():{};
+
+    // ── 타임밴 체크 ──
+    if(udata.banned&&udata.banUntil&&udata.banUntil>Date.now()){
+      const minsLeft=Math.ceil((udata.banUntil-Date.now())/60000);
+      await signOut(auth);
+      document.getElementById('auth-err').textContent=`🔨 타임밴: ${minsLeft}분 후 접속 가능합니다`;
+      return;
+    }
+    if(udata.banned&&udata.banUntil&&udata.banUntil<=Date.now()){
+      await updateDoc(doc(db,'users',user.uid),{banned:false,banUntil:0});
+    }
+
+    window._isVIP=!!udata.vip;
+    window._isVIPP=!!udata.vipp;
+    window._isAdmin=ADMINS.includes(user.email);
+    window._userTitle=udata.title||'';
+    if(window._isVIPP)window._isVIP=true;
+
+    document.getElementById('auth-modal').style.display='none';
+    document.getElementById('wrapper').style.display='block';
+    updateOnlinePresence();
+
+    const title=udata.title?` [${udata.title}]`:'';
+    const name=(user.displayName||user.email)+title;
+    const pfx=(window._isVIPP?'💜 ':window._isVIP?'👑 ':'')+(window._isAdmin?'🔧 ':'');
+    document.getElementById('user-info-hud').textContent=pfx+name+' [로그아웃]';
+    document.getElementById('hud-user-title').textContent=pfx+name+' [로그아웃]';
+
+    if(window._isAdmin)document.getElementById('adminPanelBtn').style.display='';
+    if(window._isVIPP){
+      document.getElementById('vipp-badge').style.display='block';
+      document.getElementById('vip-badge').style.display='none';
+      document.getElementById('vip-title-note').style.display='block';
+      document.getElementById('vip-title-note').innerHTML='💜 VIP+: 무한목숨 · +50000점 · 원킬 · 무적 · 순간이동 · 레인보우';
+      document.getElementById('weapon-hud').style.display='flex';
+      document.getElementById('dash-btn-wrap').style.display='';
+    }else if(window._isVIP){
+      document.getElementById('vip-badge').style.display='block';
+      document.getElementById('vip-title-note').style.display='block';
+      document.getElementById('weapon-hud').style.display='flex';
+      document.getElementById('dash-btn-wrap').style.display='';
+    }
+
+    // 공지 로드
+    window.loadNotice&&window.loadNotice();
+    // 업적 체크 (로그인 시)
+    window.checkAchievements&&window.checkAchievements(udata);
+
+  }else{
+    window._currentUser=null;window._isVIP=false;window._isVIPP=false;window._isAdmin=false;window._userTitle='';
+    document.getElementById('auth-modal').style.display='flex';
+    document.getElementById('wrapper').style.display='none';
+    document.getElementById('vip-badge').style.display='none';
+    document.getElementById('vipp-badge').style.display='none';
+    document.getElementById('adminPanelBtn').style.display='none';
+    document.getElementById('notice-banner').style.display='none';
+  }
+});
+</script>
+
+<!-- ── GAME SCRIPT ── -->
+<script>
+// ── AUDIO ──
+const AC=window.AudioContext?new AudioContext():null;
+function pt(f,t,d,v=0.28,sf=null){if(!AC)return;const vol=(window._sfxVol!==undefined?window._sfxVol:1)*v;const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;sf?(o.frequency.setValueAtTime(sf,AC.currentTime),o.frequency.exponentialRampToValueAtTime(f,AC.currentTime+d*.5)):o.frequency.setValueAtTime(f,AC.currentTime);g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.start();o.stop(AC.currentTime+d);}
+function pn(d,v=0.14){if(!AC)return;const vol=(window._sfxVol!==undefined?window._sfxVol:1)*v;const b=AC.createBuffer(1,AC.sampleRate*d,AC.sampleRate),dt=b.getChannelData(0);for(let i=0;i<dt.length;i++)dt[i]=Math.random()*2-1;const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);s.start();s.stop(AC.currentTime+d);}
+const SFX={
+  jump:()=>pt(300,'square',.12,.18,180),
+  doublejump:()=>{pt(500,'square',.08,.22,340);pt(700,'square',.12,.18,500);},
+  dash:()=>{pn(.04,.28);pt(440,'square',.06,.22);pt(880,'square',.08,.16);},
+  atk:()=>{pn(.06,.18);pt(180,'sawtooth',.08,.13);},
+  atk2:()=>{pn(.08,.22);pt(220,'sawtooth',.1,.18);pt(330,'sawtooth',.1,.15);},
+  atk3:()=>{pn(.1,.3);[180,220,280].forEach((f,i)=>setTimeout(()=>pt(f,'sawtooth',.12,.2),i*20));},
+  hit:()=>{pn(.15,.28);pt(100,'sawtooth',.18,.18);},
+  die:()=>{pt(400,'square',.05,.18);pt(200,'square',.15,.18);},
+  food:()=>pt(660,'sine',.1,.18),
+  item:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.1,.22),i*60));},
+  lighter:()=>{[262,330,392,523,659,784].forEach((f,i)=>setTimeout(()=>pt(f,'square',.15,.18),i*80));},
+  combo:n=>pt(300+n*40,'square',.08,.16),
+  bossDmg:()=>{pn(.1,.36);pt(80,'sawtooth',.3,.28);},
+  bossRoar:()=>pt(60,'sawtooth',.5,.36),
+  zonePuff:()=>{pn(.08,.22);pt(220,'square',.12,.18);},
+  zoneReady:()=>{[440,550,660].forEach((f,i)=>setTimeout(()=>pt(f,'square',.1,.26),i*80));},
+  spawnSF:()=>{[330,440,550,660,880].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.18,.3),i*60));},
+  eatSF:()=>{[262,330,392,523,659,784,1047].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.2,.36),i*55));},
+  clear:()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>pt(f,'square',.2,.26),i*90));},
+  vip:()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>pt(f,'sine',.25,.3),i*70));},
+};
+
+// ── JOYSTICK ──
+const joy={x:0,y:0,active:false};
+const joyZone=document.getElementById('joy-zone');
+const joyStick=document.getElementById('joy-stick');
+const joyDirEl=document.getElementById('joy-dir-indicator');
+const JOY_R=60;
+let joyTouchId=null;
+function getJoyPos(e,touch){
+  const rect=joyZone.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  const dx=touch.clientX-cx,dy=touch.clientY-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const clamped=Math.min(dist,JOY_R);
+  const angle=Math.atan2(dy,dx);
+  joy.x=(clamped/JOY_R)*Math.cos(angle);
+  joy.y=(clamped/JOY_R)*Math.sin(angle);
+  const px=Math.cos(angle)*clamped,py=Math.sin(angle)*clamped;
+  joyStick.style.left=`calc(50% + ${px}px)`;
+  joyStick.style.top=`calc(50% + ${py}px)`;
+  const dirs=[];
+  if(joy.x<-0.35)dirs.push('◀');
+  if(joy.x>0.35)dirs.push('▶');
+  if(joy.y<-0.5)dirs.push('▲');
+  joyDirEl.textContent=dirs.join(' ');
+}
+function resetJoy(){joy.x=0;joy.y=0;joy.active=false;joyTouchId=null;joyStick.style.left='50%';joyStick.style.top='50%';joyStick.style.transition='left .12s,top .12s';setTimeout(()=>joyStick.style.transition='none',130);joyDirEl.textContent='';}
+joyZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joyTouchId=t.identifier;joy.active=true;joyStick.style.transition='none';getJoyPos(e,t);},{passive:false});
+joyZone.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyTouchId){getJoyPos(e,t);break;}}},{passive:false});
+joyZone.addEventListener('touchend',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyTouchId){resetJoy();break;}}},{passive:false});
+joyZone.addEventListener('touchcancel',e=>{e.preventDefault();resetJoy();},{passive:false});
+
+const actBtns={jump:false,atk:false,dash:false};
+function bindAct(id,key,isAtk,isDash){
+  const el=document.getElementById(id);if(!el)return;
+  function dn(e){e.preventDefault();actBtns[key]=true;el.classList.add('pressed');if(isAtk)triggerAttack();if(isDash)triggerDash();}
+  function up(e){e.preventDefault();actBtns[key]=false;el.classList.remove('pressed');}
+  el.addEventListener('touchstart',dn,{passive:false});el.addEventListener('touchend',up,{passive:false});
+  el.addEventListener('touchcancel',up,{passive:false});el.addEventListener('mousedown',dn);
+  el.addEventListener('mouseup',up);el.addEventListener('mouseleave',up);
+}
+bindAct('btn-jump','jump',false,false);
+bindAct('btn-atk','atk',true,false);
+bindAct('btn-dash','dash',false,true);
+
+// ── KEYBOARD ──
+const keys={};
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(['Space','ArrowUp','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(e.code==='Escape'){e.preventDefault();togglePause();return;}
+  if(e.code==='Space'||e.code==='KeyX')triggerAttack();
+  if(e.code==='KeyC')triggerDash();
+  if((e.code==='Space'||e.code==='Enter')&&gs==='gameover')restartGame();
+});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('go-restart').onclick=restartGame;
+function getVIP(){return window._isVIP||false;}
+function getVIPP(){return window._isVIPP||false;}
+function getWL(){return window._weaponLevel||1;}
+
+// ── VIP+ FEATURE TOGGLES ──
+const vippToggles={onekill:false,infinitelives:true,godmode:false,superSpeed:false,scoreX10:true,autoshoot:false,rainbow:true};
+window.toggleVippFeature=function(key){
+  if(!getVIPP())return;
+  vippToggles[key]=!vippToggles[key];
+  const btn=document.getElementById('toggle-'+key);
+  if(btn){btn.textContent=vippToggles[key]?'ON':'OFF';btn.classList.toggle('on',vippToggles[key]);}
+  // 무한목숨 토글 시 즉시 lives 반영
+  if(key==='infinitelives'){
+    if(vippToggles.infinitelives){lives=999;}
+    else{lives=Math.min(lives,5);}
+    if(typeof updateHUD==='function')updateHUD();
+  }
+};
+// ── VIP+ TELEPORT ──
+window.openVippDashboard=function(){
+  if(!getVIPP())return;
+  document.getElementById('vipp-dashboard').style.display='flex';
+};
+document.getElementById('btn-vippdash-close').onclick=()=>document.getElementById('vipp-dashboard').style.display='none';
+document.getElementById('btn-vipp-close').onclick=()=>document.getElementById('vipp-modal').style.display='none';
+document.getElementById('btn-vipp-tp').onclick=function(){
+  const v=parseInt(document.getElementById('vipp-tp-stage').value)||1;
+  const res=document.getElementById('vippdash-tp-result');
+  if(v<1||v>999){res.textContent='⚠️ 1~999 사이로 입력하세요';return;}
+  if(gs!=='playing'){res.textContent='⚠️ 게임 중에만 사용 가능';return;}
+  sn=v;energy=MAX_HP;initStage();
+  res.textContent='✅ 스테이지 '+v+'로 순간이동!';
+  document.getElementById('vipp-dashboard').style.display='none';
+  showNotif('🌀 스테이지 '+v+' 순간이동!','#cc44ff',2000);
+};
+
+// ── THEMES ──
+const THEMES=[
+  {name:'산악 초원',bg:['#87ceeb','#b5e8a0','#8fba60'],deco:'mountain',groundC:'#5a8f3a',platC:'#8B7340'},
+  {name:'돌산 동굴',bg:['#1a1a2e','#2a2a40','#101018'],deco:'cave',groundC:'#555566',platC:'#77788a'},
+  {name:'열대 밀림',bg:['#0a2a0a','#1a4a1a','#0a1a0a'],deco:'jungle',groundC:'#5a3a10',platC:'#6B4A20'},
+  {name:'화산 지대',bg:['#1a0000','#3a0800','#0a0000'],deco:'volcano',groundC:'#3a1a00',platC:'#5a2a00'},
+  {name:'빙하 설원',bg:['#b0d8f0','#d8eeff','#8ab8d8'],deco:'ice',groundC:'#7ab8d8',platC:'#a8d8f0'},
+  {name:'유적 폐허',bg:['#2a2018','#3a3028','#1a1808'],deco:'ruins',groundC:'#5a4a30',platC:'#7a6a50'},
+  {name:'우주 정거장',bg:['#000010','#000820','#000018'],deco:'space',groundC:'#1a1a3a',platC:'#2a2a5a'},
+  {name:'독 늪지대',bg:['#0a1a0a','#102010','#040804'],deco:'swamp',groundC:'#2a3a10',platC:'#3a5a18'},
+  {name:'심해 유적',bg:['#000818','#001030','#000010'],deco:'deep',groundC:'#0a1a3a',platC:'#0a2a4a'},
+  {name:'황금 사막',bg:['#3a2800','#6a4800','#2a1800'],deco:'desert',groundC:'#8a6020',platC:'#aa8030'},
+];
+
+let rngSeed=0;
+function rng(){rngSeed=(rngSeed*1664525+1013904223)&0xffffffff;return(rngSeed>>>0)/0xffffffff;}
+function seededRng(seed){rngSeed=seed;}
+
+function generateStage(sn){
+  seededRng(sn*7919+31337);
+  const diff=Math.min(sn,30);
+  const theme=THEMES[(sn-1)%THEMES.length];
+  const worldW=2000+Math.floor(diff/3)*100+Math.floor(rng()*300);
+  const groundY=370;
+  const plats=[];
+  let gx=0;
+  while(gx<worldW-200){
+    const sw=Math.max(120,250+Math.floor(rng()*200)-Math.min(diff*3,80));
+    plats.push({x:gx,y:groundY,w:sw,h:50,c:theme.groundC,isGround:true});
+    gx+=sw+(20+Math.floor(rng()*80)+diff*2);
+  }
+  plats.push({x:worldW-220,y:groundY,w:230,h:50,c:theme.groundC,isGround:true});
+  const nf=8+Math.floor(diff/2)+Math.floor(rng()*4);
+  const sp=Math.floor((worldW-300)/(nf+1));
+  for(let i=0;i<nf;i++){
+    plats.push({x:200+i*sp+Math.floor(rng()*80)-40,y:160+Math.floor(rng()*160),w:80+Math.floor(rng()*80),h:18,c:theme.platC,isGround:false});
+  }
+  const ET=['dino','mammoth','spider','bird'];
+  const ne=5+Math.floor(diff*.8)+Math.floor(rng()*4);
+  const enemies=[];
+  for(let i=0;i<ne;i++){
+    const np=plats[Math.floor(rng()*plats.length)];
+    const type=ET[Math.floor(rng()*ET.length)];
+    const bh=1+Math.floor(diff/4);
+    enemies.push({x:300+Math.floor(rng()*(worldW-600)),y:np.isGround?groundY-32:np.y-32,type,hp:{dino:1+bh,mammoth:2+bh,spider:1+bh,bird:1+bh}[type],ai:rng()<.5?'patrol':'aggro'});
+  }
+  const BT=['trex','sabertooth','gigantor','hydra','mech'];
+  const bossType=BT[(sn-1)%BT.length];
+  const bossHp=10+diff*2;
+  const boss={x:worldW-260,y:groundY-75,type:bossType,hp:bossHp,maxHp:bossHp};
+  const foods=[];
+  for(let i=0;i<8+Math.floor(rng()*6);i++){
+    const np=plats[Math.floor(rng()*plats.length)];
+    foods.push({x:np.x+Math.floor(rng()*Math.max(1,np.w-20)),y:np.y-24});
+  }
+  const IT=['speed','power','shield','heal'];
+  const items=[];
+  for(let i=0;i<3+Math.floor(rng()*3);i++){
+    const np=plats[Math.floor(rng()*plats.length)];
+    items.push({x:np.x+Math.floor(rng()*Math.max(1,np.w-30)),y:np.y-30,type:IT[Math.floor(rng()*IT.length)]});
+  }
+  const zones=[];
+  for(let i=0;i<5;i++){
+    const np=plats[Math.floor(rng()*plats.length)];
+    zones.push({x:np.x+Math.floor(rng()*Math.max(1,np.w-60)),y:np.y-22,w:60,h:22,hits:0,puffTimer:0,activated:false,gp:rng()*Math.PI*2});
+  }
+  return{theme,worldW,platforms:plats,enemies,boss,foods,items,specialZones:zones,lighter:{x:worldW-160,y:groundY-35}};
+}
+
+// ── STATE ──
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const W=800,H=420,GRAV=0.55,JUMP=-13.8,WSPD=4.2,MAX_HP=3;
+let gs='title',score=0,lives=3,sn=1,energy=MAX_HP,fc=0,maxCombo=0;
+let player,cam,platforms,enemies,foods,items,lighter,boss,specialZones;
+let lighterGot=false,particles=[],floats=[],screenShake=0;
+let combo=0,comboTimer=0,powerup={speed:0,power:0,shield:0};
+let specialFoods=[],currentTheme=THEMES[0],worldW=2200;
+// VIP SKILLS
+let jumpCount=0,dashCooldown=0,dashTimer=0,dashDir=1;
+let _dashReadyShown=false;
+
+function initStage(){
+  const sd=generateStage(sn);
+  currentTheme=sd.theme;worldW=sd.worldW;
+  platforms=sd.platforms;
+  enemies=sd.enemies.map(e=>({...e,alive:true,vx:e.type==='bird'?-1.6:-1.0,vy:0,dir:-1,animT:0,startX:e.x,patrolRange:e.type==='mammoth'?160:110,w:e.type==='mammoth'?40:36,h:32,stunTimer:0,aggroTimer:0,onGround:false}));
+  foods=sd.foods.map(f=>({...f,got:false}));
+  items=sd.items.map(i=>({...i,got:false}));
+  specialZones=sd.specialZones;
+  lighter={...sd.lighter,got:false};lighterGot=false;
+  boss={...sd.boss,alive:true,vx:-1.5,vy:0,dir:-1,animT:0,w:(sd.boss.type==='gigantor'||sd.boss.type==='mech')?72:56,h:(sd.boss.type==='gigantor'||sd.boss.type==='mech')?70:58,phase:1,stunTimer:0,chargeCooldown:0,chargeTimer:0,roarTimer:0,active:false,onGround:false};
+  particles=[];floats=[];specialFoods=[];combo=0;comboTimer=0;powerup={speed:0,power:0,shield:0};screenShake=0;
+  jumpCount=0;dashCooldown=0;dashTimer=0;_dashReadyShown=false;
+  player={x:80,y:260,vx:0,vy:0,w:34,h:44,onGround:false,dir:1,atkTimer:0,atkCooldown:0,hitTimer:0,animT:0,wasOnGround:false,coyoteTimer:0};
+  cam={x:0};
+  showBanner(`STAGE ${sn}`,currentTheme.name+(sn>=10?' '+'★'.repeat(Math.min(5,Math.floor(sn/5))):''),2000);
+  updateHUD();
+}
+
+function showBanner(t,s,d=2000){
+  const el=document.getElementById('stage-banner');
+  document.getElementById('banner-title').textContent=t;document.getElementById('banner-sub').textContent=s;
+  el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',d);
+}
+function updateHUD(){
+  document.getElementById('hud-lives').textContent='x'+lives;
+  document.getElementById('score-val').textContent=String(score).padStart(7,'0');
+  document.getElementById('hud-stage').textContent=sn;
+  [1,2,3].forEach(i=>document.getElementById('h'+i).classList.toggle('empty',i>energy));
+  const cel=document.getElementById('combo-hud');
+  if(combo>=2){cel.textContent=combo+'x!';cel.style.color=combo>=5?'#ff0':combo>=3?'#f80':'#f60';}
+  else{cel.textContent='--';cel.style.color='#555';}
+  if(getVIP())document.getElementById('hud-weapon-lv').textContent=getWL();
+}
+
+function startGame(){
+  if(AC)AC.resume();
+  document.getElementById('title-screen').style.display='none';
+  score=0;sn=1;energy=MAX_HP;maxCombo=0;
+  if(getVIPP()){
+    lives=vippToggles.infinitelives?999:5;
+    score=50000;SFX.vip();showNotif('💜 VIP+ 보너스 +50000점!','#cc44ff',2600);
+  }else if(getVIP()){lives=5;score=5000;SFX.vip();showNotif('👑 VIP 보너스 +5000점!','#ffd700',2200);}
+  else{lives=3;}
+  initStage();gs='playing';
+}
+function restartGame(){
+  document.getElementById('gameover-screen').style.display='none';
+  score=0;sn=1;energy=MAX_HP;maxCombo=0;
+  if(getVIPP()){lives=vippToggles.infinitelives?999:5;score=50000;}
+  else if(getVIP()){lives=5;score=5000;}
+  else{lives=3;}
+  initStage();gs='playing';
+}
+function advanceStage(){
+  SFX.clear();score+=sn*200;sn++;energy=Math.min(MAX_HP,energy+1);updateHUD();initStage();
+}
+function showGameOver(){
+  gs='gameover';
+  document.getElementById('go-stage').textContent=sn;
+  document.getElementById('go-score').textContent=score;
+  document.getElementById('go-combo').textContent=maxCombo;
+  document.getElementById('gameover-screen').style.display='flex';
+  // 점수 저장
+  if(window.saveScore)window.saveScore(score,sn,maxCombo);
+}
+
+// ── VIP: DASH ──
+function triggerDash(){
+  if(!getVIP()||gs!=='playing')return;
+  if(dashCooldown>0)return;
+  if(AC)AC.resume();
+  SFX.dash();
+  dashTimer=14;dashCooldown=150;dashDir=player.dir;
+  // 대쉬 이펙트
+  for(let i=0;i<18;i++){
+    particles.push({x:player.x+player.w/2,y:player.y+player.h/2,vx:-player.dir*(2+Math.random()*4),vy:(Math.random()-.5)*4,color:['#0cf','#08f','#fff'][Math.floor(Math.random()*3)],life:25+Math.random()*15,maxLife:40,type:'normal',size:6+Math.random()*6});
+  }
+  _dashReadyShown=false;
+  addFloat(player.x,player.y-14,'💨 DASH!');
+}
+
+// ── ATTACK ──
+function triggerAttack(){
+  if(gs!=='playing'||player.atkCooldown>0)return;
+  if(AC)AC.resume();
+  const vip=getVIP();
+  const wl=vip?getWL():1;
+  const isPow=powerup.power>0;
+
+  // 무기 레벨에 따른 범위/데미지
+  let reach,atkH,dmgBase,atkCd,atkT;
+  if(wl===3){reach=isPow?120:100;atkH=isPow?50:40;dmgBase=3;atkCd=16;atkT=22;SFX.atk3();}
+  else if(wl===2){reach=isPow?88:72;atkH=isPow?40:30;dmgBase=2;atkCd=18;atkT=21;SFX.atk2();}
+  else{reach=isPow?64:48;atkH=isPow?34:24;dmgBase=1;atkCd=22;atkT=20;SFX.atk();}
+
+  player.atkTimer=atkT;player.atkCooldown=atkCd;
+  const ax=player.dir>0?player.x+player.w:player.x-reach,ay=player.y+8;
+
+  // Lv3: 광역 파티클
+  if(wl===3){
+    for(let i=0;i<12;i++){
+      particles.push({x:ax+Math.random()*reach,y:ay+Math.random()*atkH,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,color:['#ff8800','#ffcc00','#ffffff'][Math.floor(Math.random()*3)],life:18+Math.random()*12,maxLife:30,type:'normal',size:7+Math.random()*7});
+    }
+  }
+  if(wl===2&&!isPow){
+    // 불꽃 이펙트
+    for(let i=0;i<7;i++)particles.push({x:ax+i*(reach/7),y:ay+atkH/2,vx:player.dir*2,vy:(Math.random()-.5)*3,color:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],life:14+Math.random()*10,maxLife:24,type:'normal',size:5+Math.random()*5});
+  }
+
+  specialZones.forEach(z=>{
+    if(z.activated||!rectsOv(ax,ay,reach,atkH,z.x,z.y,z.w,z.h))return;
+    z.hits++;z.puffTimer=30;SFX.zonePuff();
+    for(let i=0;i<14;i++)particles.push({x:z.x+z.w/2+(rng()-.5)*z.w*.7,y:z.y+rng()*z.h,vx:(rng()-.5)*3.5,vy:-(rng()*3+1.5),color:['#ccc','#aaa','#ddd'][Math.floor(rng()*3)],life:45+rng()*25,maxLife:70,type:'smoke',size:10+rng()*14});
+    addFloat(z.x+z.w/2-10,z.y-10,z.hits===1?'💨 1/3':z.hits===2?'💨 2/3':'💥 3/3!');
+    screenShake=5;
+    if(z.hits>=3){z.activated=true;SFX.zoneReady();screenShake=18;dropSF(z.x+z.w/2-35,z.y);for(let i=0;i<40;i++)particles.push({x:z.x+z.w/2,y:z.y+z.h/2,vx:(rng()-.5)*10,vy:(rng()-1)*8,color:['#f80','#fc0','#f40','#fff'][Math.floor(rng()*4)],life:60+rng()*30,maxLife:90,type:'burst',size:8+rng()*10});}
+  });
+
+  enemies.forEach(en=>{
+    if(!en.alive||!rectsOv(ax,ay,reach,atkH,en.x,en.y,en.w,en.h))return;
+    const dmg=getVIPP()&&vippToggles.onekill?9999:(isPow?dmgBase+1:dmgBase);en.hp-=dmg;en.stunTimer=20;en.vx=player.dir*(4+wl);en.vy=-3;
+    spawnP(en.x+en.w/2,en.y+10,'#f44',isPow?16:10);
+    if(en.hp<=0){
+      en.alive=false;hitCombo();
+      let pts=getES(en.type)*(1+Math.floor(sn/3));
+      if(vip)pts=Math.floor(pts*1.2);
+      if(getVIPP()&&vippToggles.scoreX10)pts=pts*10;
+      score+=pts*(combo>=3?combo:1);
+      if(vip||getVIPP())spawnVIPP(en.x+en.w/2,en.y);
+      addFloat(en.x,en.y-8,'💀 +'+pts);SFX.die();updateHUD();spawnP(en.x+en.w/2,en.y+10,'#fa0',18);
+    }else{addFloat(en.x,en.y-8,'💥');SFX.hit();}
+  });
+
+  if(boss&&boss.alive&&boss.active&&rectsOv(ax,ay,reach,atkH,boss.x,boss.y,boss.w,boss.h)){
+    const dmg=getVIPP()&&vippToggles.onekill?9999:(isPow?dmgBase*2:dmgBase);boss.hp-=dmg;boss.stunTimer=15;boss.vx=player.dir*2;
+    spawnP(boss.x+boss.w/2,boss.y+20,'#f22',20);SFX.bossDmg();screenShake=12;
+    addFloat(boss.x+boss.w/2,boss.y-10,`💢 -${dmg}`);
+    if(boss.hp<=0){
+      boss.alive=false;
+      let bpts=1000*Math.ceil(sn/2);
+      if(vip)bpts=Math.floor(bpts*1.3);
+      if(getVIPP()&&vippToggles.scoreX10)bpts=bpts*10;
+      score+=bpts;
+      if(vip||getVIPP())spawnVIPP(boss.x+boss.w/2,boss.y);
+      addFloat(boss.x,boss.y-20,`🏆 BOSS! +${bpts}`);spawnP(boss.x+boss.w/2,boss.y+boss.h/2,'#fc0',60);screenShake=30;SFX.lighter();updateHUD();
+    }else if(boss.hp<=boss.maxHp/2&&boss.phase===1){boss.phase=2;addFloat(boss.x,boss.y-20,'⚡ ENRAGED!');spawnP(boss.x+boss.w/2,boss.y,'#f00',30);}
+  }
+}
+
+function spawnVIPP(x,y){
+  const vc=['#ffd700','#ffec8b','#ffa500','#fff8dc','#ffcc00'];
+  for(let i=0;i<30;i++)particles.push({x,y,vx:(Math.random()-.5)*11,vy:(Math.random()-1)*10,color:vc[Math.floor(Math.random()*vc.length)],life:60+Math.random()*30,maxLife:90,type:'burst',size:7+Math.random()*8});
+}
+function dropSF(x){
+  SFX.spawnSF();
+  const em=['🍖','🍗','🥩','🍔','🥚','🍣','🦴','🍕'];
+  specialFoods.push({x,y:-80,vy:0,onGround:false,got:false,anim:0,emoji:em[Math.floor(rng()*em.length)],bounce:0});
+  showNotif('✨ 스페셜 푸드 출현!','#ffcc00',2400);
+}
+function showNotif(msg,color,dur){
+  const n=document.getElementById('item-notif');n.textContent=msg;n.style.color=color;n.style.display='block';clearTimeout(n._t);n._t=setTimeout(()=>n.style.display='none',dur);
+}
+function getES(t){return{dino:150,mammoth:220,spider:180,bird:160,hydra:300,mech:350}[t]||150;}
+function hitCombo(){combo++;comboTimer=180;if(combo>maxCombo)maxCombo=combo;if(combo>=2)SFX.combo(combo);updateHUD();}
+function rectsOv(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
+function platCol(obj,p){
+  const ow=obj.w||34,oh=obj.h||44;
+  if(!rectsOv(obj.x,obj.y,ow,oh,p.x,p.y,p.w,p.h))return;
+  const ox=Math.min(obj.x+ow,p.x+p.w)-Math.max(obj.x,p.x);
+  const oy=Math.min(obj.y+oh,p.y+p.h)-Math.max(obj.y,p.y);
+  if(ox>oy){if(obj.vy>=0&&obj.y+oh-obj.vy<=p.y+8){obj.y=p.y-oh;obj.vy=0;obj.onGround=true;}else if(obj.vy<0){obj.y=p.y+p.h;obj.vy=0;}}
+  else{obj.vx=0;if(obj.x<p.x)obj.x=p.x-ow;else obj.x=p.x+p.w;}
+}
+
+function updateEnemyAI(en){
+  if(en.stunTimer>0){en.stunTimer--;return;}
+  const dx=player.x-en.x,dy=player.y-en.y;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const aR=en.ai==='aggro'?260:180;
+  const sb=1+Math.min(sn,20)*.04;
+  if(en.type==='bird'){
+    if(dist<aR){en.vx=dx>0?2.2*sb:-2.2*sb;en.dir=dx>0?1:-1;en.y+=Math.sin(fc*.07+en.startX*.01)*1.4;en.vy=dist<80?2.5:(player.y+30-en.y)*.04;}
+    else{en.x+=en.vx;en.y+=Math.sin(fc*.05+en.startX*.01)*1.2;if(en.x<en.startX-en.patrolRange||en.x>en.startX+en.patrolRange){en.vx*=-1;en.dir*=-1;}}
+    return;
+  }
+  if(dist<aR)en.aggroTimer=120;
+  if(en.aggroTimer>0){en.aggroTimer--;const spd=(en.type==='mammoth'?1.4:1.6)*sb;en.vx=dx>0?spd:-spd;en.dir=dx>0?1:-1;if(dy<-60&&en.onGround&&Math.random()<.03){en.vy=-10;en.onGround=false;}}
+  else if(en.x<en.startX-en.patrolRange||en.x>en.startX+en.patrolRange){en.vx*=-1;en.dir=en.vx>0?1:-1;}
+}
+
+function updateBossAI(){
+  if(!boss||!boss.alive)return;
+  if(!boss.active&&player.x>boss.x-500){
+    boss.active=true;SFX.bossRoar();screenShake=20;
+    document.getElementById('boss-warn').style.display='block';
+    setTimeout(()=>document.getElementById('boss-warn').style.display='none',2500);
+  }
+  if(!boss.active||boss.stunTimer-->0)return;
+  const dx=player.x-boss.x;
+  const sm=boss.phase===2?1.6:1.0;
+  const db=1+Math.min(sn,20)*.05;
+  boss.animT=(boss.animT+1)%60;
+  if(boss.chargeTimer>0){boss.chargeTimer--;boss.vx=boss.dir*(boss.w>60?8:6)*sm;}
+  else if(boss.chargeCooldown>0){
+    boss.chargeCooldown--;boss.vx=dx>0?2*sm*db:-2*sm*db;boss.dir=dx>0?1:-1;
+    if(boss.y<player.y-80&&boss.onGround&&Math.random()<.025){boss.vy=-11;boss.onGround=false;}
+    if(--boss.roarTimer<=0&&Math.random()<.005){boss.roarTimer=180;SFX.bossRoar();screenShake=15;spawnP(boss.x+boss.w/2,boss.y+boss.h,'#fa0',24);}
+  }else{boss.chargeTimer=boss.w>60?28:22;boss.chargeCooldown=boss.phase===2?80:120;boss.dir=dx>0?1:-1;spawnP(boss.x+boss.w/2,boss.y+10,'#f60',12);}
+  boss.vy+=GRAV;boss.x+=boss.vx;boss.y+=boss.vy;
+  boss.x=Math.max(0,Math.min(boss.x,worldW-boss.w));boss.onGround=false;
+  platforms.forEach(p=>platCol(boss,p));
+  if(boss.y>500){boss.y=200;boss.vy=0;}
+  if(player.hitTimer===0&&rectsOv(player.x,player.y,player.w,player.h,boss.x,boss.y,boss.w,boss.h))takeDmg(false,2);
+}
+
+function update(){
+  fc++;
+  const goL=(keys['ArrowLeft']||keys['KeyA'])||(joy.active&&joy.x<-0.3);
+  const goR=(keys['ArrowRight']||keys['KeyD'])||(joy.active&&joy.x>0.3);
+  const jumpKey=(keys['ArrowUp']||keys['KeyW']||keys['KeyZ'])||actBtns.jump||(joy.active&&joy.y<-0.5);
+
+  const vip=getVIP();
+  const wl=vip?getWL():1;
+  const vipp=getVIPP();
+  // VIP+ 초고속: 3배속
+  const baseSpd=WSPD*(vipp&&vippToggles.superSpeed?3:1);
+  const spd=baseSpd*(powerup.speed>0?1.55:1)*(dashTimer>0?0:1);
+
+  // VIP+ 자동조준: 2초마다 근처 적 자동 공격
+  if(vipp&&vippToggles.autoshoot&&fc%120===0&&player.atkCooldown===0){
+    let closest=null,minDist=350;
+    enemies.forEach(en=>{if(!en.alive)return;const dx=en.x-player.x,dy=en.y-player.y;const d=Math.sqrt(dx*dx+dy*dy);if(d<minDist){minDist=d;closest=en;}});
+    if(closest){player.dir=closest.x>player.x?1:-1;triggerAttack();}
+    if(!closest&&boss&&boss.alive&&boss.active){const dx=boss.x-player.x,dy=boss.y-player.y;if(Math.sqrt(dx*dx+dy*dy)<400){player.dir=boss.x>player.x?1:-1;triggerAttack();}}
+  }
+
+  // ── VIP 대쉬 처리 ──
+  if(dashTimer>0){
+    dashTimer--;
+    player.vx=dashDir*14*(wl===3?1.3:wl===2?1.15:1);
+    // 대쉬 트레일 파티클
+    if(fc%3===0)particles.push({x:player.x+player.w/2,y:player.y+player.h/2+(Math.random()-.5)*10,vx:-dashDir*2,vy:(Math.random()-.5)*2,color:'#0cf',life:18,maxLife:18,type:'normal',size:8});
+  }else{
+    if(goL){player.vx=-spd;player.dir=-1;}
+    else if(goR){player.vx=spd;player.dir=1;}
+    else player.vx*=.72;
+  }
+  if(dashCooldown>0){
+    dashCooldown--;
+    // 쿨다운 끝나면 READY 표시
+    if(dashCooldown===0&&vip&&!_dashReadyShown){
+      _dashReadyShown=true;
+      showNotif('💨 DASH READY!','#0cf',1200);
+    }
+  }
+
+  // ── VIP 더블점프 ──
+  if(player.onGround)player.coyoteTimer=8;else if(player.coyoteTimer>0)player.coyoteTimer--;
+  if(jumpKey&&!keys['_jh']&&!actBtns._jh_prev){
+    if(player.coyoteTimer>0){
+      player.vy=JUMP;player.coyoteTimer=0;jumpCount=1;SFX.jump();
+    }else if(vip&&jumpCount<2&&player.vy>-5){
+      // 더블점프
+      player.vy=JUMP*0.85;jumpCount=2;SFX.doublejump();
+      // 더블점프 이펙트
+      for(let i=0;i<20;i++)particles.push({x:player.x+player.w/2+(Math.random()-.5)*20,y:player.y+player.h,vx:(Math.random()-.5)*6,vy:Math.random()*4,color:['#ffd700','#ffaa00','#ffffff'][Math.floor(Math.random()*3)],life:22+Math.random()*12,maxLife:34,type:'normal',size:6+Math.random()*5});
+      addFloat(player.x,player.y-12,'🦘 DOUBLE JUMP!');
+    }
+  }
+  keys['_jh']=jumpKey;actBtns._jh_prev=actBtns.jump;
+  if(player.onGround)jumpCount=0;
+  if(!jumpKey&&player.vy<-6)player.vy+=1.5;
+
+  player.vy+=GRAV;player.x+=player.vx;player.y+=player.vy;
+  player.x=Math.max(0,Math.min(player.x,worldW-player.w));
+  player.wasOnGround=player.onGround;player.onGround=false;
+  platforms.forEach(p=>platCol(player,p));
+  if(!player.wasOnGround&&player.onGround&&Math.abs(player.vy)>2)spawnP(player.x+player.w/2,player.y+player.h,'#aaa',5);
+  if(player.y>500){takeDmg(true);return;}
+
+  if(player.atkTimer>0)player.atkTimer--;
+  if(player.atkCooldown>0)player.atkCooldown--;
+  if(player.hitTimer>0)player.hitTimer--;
+  player.animT=(player.animT+1)%60;
+  if(comboTimer>0){comboTimer--;if(comboTimer===0){combo=0;updateHUD();}}
+  for(const k in powerup)if(powerup[k]>0)powerup[k]--;
+
+  enemies.forEach(en=>{
+    if(!en.alive)return;en.animT=(en.animT+1)%60;updateEnemyAI(en);
+    if(en.type!=='bird'){en.vy+=GRAV;en.x+=en.vx;en.y+=en.vy;en.onGround=false;platforms.forEach(p=>platCol(en,p));if(en.y>500)en.alive=false;}
+    else{en.x+=en.vx;en.y=Math.max(80,Math.min(en.y,H-100));}
+    if(player.hitTimer===0&&powerup.shield===0&&rectsOv(player.x,player.y,player.w,player.h,en.x,en.y,en.w,en.h))takeDmg(false);
+  });
+  updateBossAI();
+
+  foods.forEach(f=>{if(f.got)return;if(rectsOv(player.x,player.y,player.w,player.h,f.x,f.y,22,22)){f.got=true;score+=50;addFloat(f.x,f.y-10,'+50');spawnP(f.x+11,f.y+11,'#fc0',6);SFX.food();updateHUD();}});
+  items.forEach(it=>{if(it.got)return;if(rectsOv(player.x,player.y,player.w,player.h,it.x,it.y,26,26)){it.got=true;applyItem(it.type);spawnP(it.x+13,it.y+13,getIC(it.type),18);SFX.item();}});
+  specialZones.forEach(z=>{if(z.puffTimer>0)z.puffTimer--;});
+  specialFoods.forEach(sf=>{
+    if(sf.got)return;sf.anim=(sf.anim+1)%60;sf.vy+=GRAV*.7;sf.y+=sf.vy;sf.onGround=false;
+    platforms.forEach(p=>{if(!rectsOv(sf.x,sf.y,70,70,p.x,p.y,p.w,p.h))return;if(sf.vy>=0&&sf.y+70-sf.vy<=p.y+8){sf.y=p.y-70;sf.vy*=-.35;sf.bounce++;spawnP(sf.x+35,sf.y+70,'#fc0',8);screenShake=sf.bounce<=2?6:2;if(Math.abs(sf.vy)<.8)sf.vy=0;}});
+    if(rectsOv(player.x,player.y,player.w,player.h,sf.x,sf.y,70,70)){
+      sf.got=true;score+=10000;updateHUD();SFX.eatSF();screenShake=20;
+      addFloat(sf.x,sf.y-20,'🎉 +10000!!');
+      if(getVIP())spawnVIPP(sf.x+35,sf.y+35);
+      for(let i=0;i<60;i++)particles.push({x:sf.x+35,y:sf.y+35,vx:(Math.random()-.5)*14,vy:(Math.random()-1)*12,color:['#fc0','#f60','#f00','#fff','#0ff','#f0f'][Math.floor(Math.random()*6)],life:70+Math.random()*40,maxLife:110,type:'burst',size:10+Math.random()*12});
+      showNotif('🎉 +10000점! 스페셜 GET!','#ffcc00',2800);
+    }
+  });
+  specialFoods=specialFoods.filter(sf=>sf.y<600);
+
+  if(!lighter.got&&rectsOv(player.x,player.y,player.w,player.h,lighter.x,lighter.y,30,30)){
+    lighter.got=true;lighterGot=true;score+=500+sn*100;updateHUD();
+    spawnP(lighter.x+15,lighter.y+15,'#f80',30);addFloat(lighter.x,lighter.y-20,'🔥 CLEAR!');SFX.lighter();
+    setTimeout(advanceStage,1200);
+  }
+  let tx=player.x-W/2+player.w/2;tx=Math.max(0,Math.min(tx,worldW-W));cam.x+=(tx-cam.x)*.13;
+  if(screenShake>0)screenShake--;
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.type==='smoke'?(p.vy*=.92,p.vx*=.9):p.vy+=.2;p.life--;});
+  floats=floats.filter(f=>f.life>0);floats.forEach(f=>{f.y-=.85;f.life--;});
+}
+
+function applyItem(type){
+  const labels={speed:'⚡ SPEED UP!',power:'👊 POWER UP!',shield:'🛡️ INVINCIBLE!',heal:'❤️ HEAL!'};
+  showNotif(labels[type],'#0ff',2000);
+  const vip=getVIP();
+  if(type==='speed')powerup.speed=vip?540:360;
+  else if(type==='power')powerup.power=vip?450:300;
+  else if(type==='shield'){powerup.shield=vip?360:240;addFloat(player.x,player.y-20,'🛡️');}
+  else if(type==='heal'){
+    if(energy<MAX_HP){energy++;updateHUD();addFloat(player.x,player.y-20,'❤️ +1');}
+    else{const bonus=vip?400:200;score+=bonus;addFloat(player.x,player.y-20,`+${bonus}`);updateHUD();}
+  }
+}
+function getIC(t){return{speed:'#0ff',power:'#f80',shield:'#88f',heal:'#f46'}[t]||'#fff';}
+function takeDmg(instant,dmg=1){
+  if(getVIPP()&&vippToggles.godmode&&!instant)return; // 영구 무적
+  if(player.hitTimer>0&&!instant)return;
+  if(powerup.shield>0&&!instant){powerup.shield=0;spawnP(player.x+player.w/2,player.y+player.h/2,'#88f',20);addFloat(player.x,player.y-20,'🛡️ BLOCKED!');return;}
+  energy-=dmg;player.hitTimer=100;screenShake=8;combo=0;comboTimer=0;updateHUD();
+  if(energy<=0){
+    if(getVIPP()&&vippToggles.infinitelives){energy=MAX_HP;player.x=Math.max(80,cam.x+100);player.y=200;player.vx=0;player.vy=0;addFloat(player.x,player.y-20,'♾️ 무한목숨!');updateHUD();return;}
+    lives--;if(lives<=0){showGameOver();return;}energy=MAX_HP;player.x=Math.max(80,cam.x+100);player.y=200;player.vx=0;player.vy=0;updateHUD();
+  }
+}
+function spawnP(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*7,vy:(Math.random()-1)*7,color,life:28+Math.random()*22,maxLife:50,type:'normal',size:5});}
+function addFloat(x,y,text){floats.push({x,y,text,life:75,maxLife:75});}
+
+// ── DRAW ──
+function draw(){
+  const shX=screenShake?(Math.random()-.5)*screenShake*.6:0;
+  const shY=screenShake?(Math.random()-.5)*screenShake*.4:0;
+  ctx.save();ctx.translate(shX,shY);
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,currentTheme.bg[0]);g.addColorStop(.6,currentTheme.bg[1]);g.addColorStop(1,currentTheme.bg[2]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(getVIPP()){
+    // VIP+ 보라색 오라
+    const vpa=.1+Math.sin(fc*.09)*.06;ctx.fillStyle=`rgba(170,0,255,${vpa})`;ctx.fillRect(0,0,W,H);
+    // 레인보우 오라 (플레이어 주변)
+    if(vippToggles.rainbow){
+      const h=(fc*2)%360;ctx.fillStyle=`hsla(${h},100%,60%,0.07)`;ctx.fillRect(0,0,W,H);
+    }
+  }
+  if(getVIP()&&!getVIPP()){const vg=ctx.createLinearGradient(0,0,W,H);const tt=Date.now()*.001;
+    vg.addColorStop(0,`rgba(255,215,0,${.04+Math.sin(tt)*.02})`);vg.addColorStop(1,`rgba(255,140,0,${.04+Math.cos(tt)*.02})`);
+    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  }
+  drawDeco();drawPlats();drawZones();drawSF();drawFoods();drawItems();drawLighter();drawEnemies();drawBoss();drawPlayer();drawParticles();drawFloats();drawHUDOv();drawPUInds();
+  ctx.restore();
+}
+
+function drawDeco(){
+  const d=currentTheme.deco;ctx.save();
+  if(d==='mountain'){
+    [[100,290,180],[290,255,150],[510,295,130],[670,265,165],[860,285,140]].forEach(([x,y,w])=>{const px=((x-cam.x*.18)%(worldW+200)+worldW+200)%(W+400)-200;drawMtn(px,y,w);});
+    ctx.fillStyle='rgba(255,255,255,.75)';[[80,55],[260,42],[530,67],[750,50]].forEach(([cx,cy])=>drawCloud(((cx-cam.x*.08)%(W+200)+W+200)%W,cy));
+    ctx.fillStyle='#ffee44';const sx=690-cam.x*.04;ctx.beginPath();ctx.arc(sx,55,28,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<40;i++){const gx=((i*52-cam.x*.9)%(worldW+100)+worldW+100)%(W+100)-50;drawGrass(gx,368);}
+  }else if(d==='cave'){
+    ctx.fillStyle='#3a3a50';for(let i=0;i<28;i++){const sx=((i*105-cam.x*.38)%worldW+worldW)%(W+220)-110;const h=25+Math.sin(i*1.7)*20;ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx+15,h);ctx.lineTo(sx+30,0);ctx.fill();}
+    for(let i=0;i<14;i++){const ox=((i*195+60-cam.x*.28)%worldW+worldW)%(W+100)-50;const alpha=.18+Math.sin(fc*.04+i)*.12;ctx.fillStyle=['rgba(60,160,255,','rgba(180,60,255,','rgba(60,255,160,'][i%3]+alpha+')';ctx.beginPath();ctx.arc(ox,40+Math.sin(i*1.3)*20,22,0,Math.PI*2);ctx.fill();}
+  }else if(d==='jungle'){
+    [60,210,380,550,720,900,1100].forEach((tx,i)=>{const px=((tx-cam.x*.28)%(worldW+300)+worldW+300)%(W+400)-200;ctx.fillStyle='#1a4a1a';ctx.beginPath();ctx.arc(px,202+(i%3)*20,36+(i%3)*9,0,Math.PI*2);ctx.fill();});
+    for(let i=0;i<10;i++){const ffx=((i*280+80-cam.x*.6)%worldW+worldW)%(W+50)-25;const alpha=.45+Math.sin(fc*.09+i)*.4;ctx.fillStyle=`rgba(180,255,80,${alpha})`;ctx.beginPath();ctx.arc(ffx,100+Math.sin(fc*.035+i*1.1)*65+i*16,2.5,0,Math.PI*2);ctx.fill();}
+  }else if(d==='volcano'){
+    for(let i=0;i<12;i++){const lx=((i*220+80-cam.x*.6)%worldW+worldW)%(W+100)-50;const fl=Math.sin(fc*.1+i)*.15;ctx.fillStyle=`rgba(255,80,0,${.4+fl})`;ctx.beginPath();ctx.ellipse(lx,395,35,12,0,0,Math.PI*2);ctx.fill();}
+    for(let i=0;i<8;i++){const vx=((i*310+60-cam.x*.3)%worldW+worldW)%(W+100)-50;const rise=(fc*.8+i*40)%200;ctx.fillStyle=`rgba(80,60,60,${.25-.25*(rise/200)})`;ctx.beginPath();ctx.arc(vx,H-rise,20+rise*.15,0,Math.PI*2);ctx.fill();}
+    const hg=ctx.createLinearGradient(0,280,0,H);hg.addColorStop(0,'rgba(200,40,0,0)');hg.addColorStop(1,'rgba(200,40,0,.3)');ctx.fillStyle=hg;ctx.fillRect(0,280,W,H-280);
+  }else if(d==='ice'){
+    for(let i=0;i<20;i++){const sx=((i*195+fc*.4+cam.x*.05)%W+W)%W;const sy=((i*130+fc*.6+i*20)%H+H)%H;ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='10px serif';ctx.fillText('❄',sx,sy);}
+    for(let i=0;i<4;i++){const alpha=.08+Math.sin(fc*.02+i)*.05;ctx.fillStyle=`rgba(${i%2?80:40},255,${i%2?180:120},${alpha})`;ctx.beginPath();ctx.moveTo(0,80+i*30);ctx.bezierCurveTo(W/3,60+i*30+Math.sin(fc*.01+i)*20,W*2/3,100+i*30,W,70+i*30);ctx.lineTo(W,0);ctx.lineTo(0,0);ctx.fill();}
+  }else if(d==='ruins'){
+    for(let i=0;i<8;i++){const rx=((i*320+80-cam.x*.4)%worldW+worldW)%(W+200)-100;ctx.fillStyle='#6a5a40';ctx.fillRect(rx,180,28,190);ctx.fillStyle='#5a4a30';for(let j=0;j<5;j++)ctx.fillRect(rx,180+j*36,28,4);ctx.fillStyle='#8a7a60';ctx.fillRect(rx-8,174,44,16);}
+  }else if(d==='space'){
+    for(let i=0;i<60;i++){const sx=((i*137+80-cam.x*.08)%worldW+worldW)%(W+20)-10;const sy=20+((i*79)%320);const sz=.5+Math.sin(fc*.05+i)*.5;ctx.fillStyle=`rgba(255,255,255,${.4+sz*.5})`;ctx.beginPath();ctx.arc(sx,sy,sz+.5,0,Math.PI*2);ctx.fill();}
+    ctx.strokeStyle='rgba(0,150,255,0.12)';ctx.lineWidth=1;
+    for(let x=(((-cam.x)%60)+60)%60;x<W;x+=60)ctx.strokeRect(x,0,0,H);
+    for(let y=0;y<H;y+=60)ctx.strokeRect(0,y,W,0);
+  }else if(d==='swamp'){
+    for(let i=0;i<6;i++){const wx=((i*380-cam.x*.5)%worldW+worldW)%(W+200)-100;ctx.fillStyle=`rgba(40,80,20,${.2+Math.sin(fc*.04+i)*.1})`;ctx.beginPath();ctx.ellipse(wx,385,90+Math.sin(fc*.03+i)*15,18,0,0,Math.PI*2);ctx.fill();}
+    for(let i=0;i<12;i++){const bx=((i*200+fc*.3+cam.x*.05)%W+W)%W;const alpha=.3+Math.sin(fc*.1+i)*.25;ctx.fillStyle=`rgba(100,200,50,${alpha})`;ctx.beginPath();ctx.arc(bx,200+Math.sin(fc*.04+i*1.3)*80+i*15,2,0,Math.PI*2);ctx.fill();}
+  }else if(d==='deep'){
+    for(let i=0;i<18;i++){const bx=((i*143+fc*.55+cam.x*.04)%W+W)%W;const by=((fc*.35+i*77)%H+H)%H;const a=.18+Math.sin(fc*.04+i)*.12;ctx.fillStyle=`rgba(0,160,255,${a})`;ctx.beginPath();ctx.arc(bx,by,2+Math.sin(i*1.3)*.8,0,Math.PI*2);ctx.fill();}
+    for(let i=0;i<10;i++){const sx2=((i*240+80-cam.x*.55)%worldW+worldW)%(W+200)-100;const wave=Math.sin(fc*.06+i)*12;ctx.strokeStyle='rgba(0,180,120,.5)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx2,H);ctx.bezierCurveTo(sx2+wave,H-50,sx2-wave,H-100,sx2+wave*.5,H-140);ctx.stroke();}
+    for(let i=0;i<4;i++){const lx=50+i*220;const a=.06+Math.sin(fc*.03+i)*.04;ctx.fillStyle=`rgba(40,120,255,${a})`;ctx.beginPath();ctx.moveTo(lx,0);ctx.lineTo(lx+60,H);ctx.lineTo(lx+80,H);ctx.lineTo(lx+20,0);ctx.fill();}
+  }else if(d==='desert'){
+    const sxa=W*.8-cam.x*.02;ctx.fillStyle='#ffcc00';ctx.beginPath();ctx.arc(sxa,50,34,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<7;i++){const cx=((i*350+90-cam.x*.45)%worldW+worldW)%(W+200)-100;ctx.fillStyle='#3a7a18';ctx.fillRect(cx+10,310,16,60);ctx.fillRect(cx,330,12,10);ctx.fillRect(cx+26,340,12,10);}
+    for(let i=0;i<5;i++){const wx=((i*310+fc*.8+cam.x*.06)%W+W)%W;const a=.07+Math.sin(fc*.08+i)*.05;ctx.strokeStyle=`rgba(255,140,0,${a})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(wx,380);ctx.bezierCurveTo(wx+30,370+Math.sin(fc*.1+i)*6,wx+60,380,wx+90,375);ctx.stroke();}
+    for(let i=0;i<30;i++){const gx=((i*67+cam.x*.9)%worldW+worldW)%(W+60)-30;ctx.fillStyle='rgba(200,160,60,.35)';ctx.beginPath();ctx.arc(gx,368+Math.sin(i)*.5,1.5,0,Math.PI*2);ctx.fill();}
+  }
+  ctx.restore();
+}
+function drawMtn(x,y,w){ctx.fillStyle='#6a9a6a';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w/2,y-w*.7);ctx.lineTo(x+w,y);ctx.fill();ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(x+w/2,y-w*.7);ctx.lineTo(x+w/2-14,y-w*.46);ctx.lineTo(x+w/2+14,y-w*.46);ctx.fill();}
+function drawCloud(x,y){ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.arc(x+22,y-7,15,0,Math.PI*2);ctx.arc(x+40,y,19,0,Math.PI*2);ctx.fill();}
+function drawGrass(x,y){ctx.strokeStyle='#4a8a28';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y-8);ctx.stroke();ctx.beginPath();ctx.moveTo(x+4,y);ctx.lineTo(x+4,y-10);ctx.stroke();}
+
+function drawPlats(){
+  const tops={mountain:'#6fc850',cave:'#667',jungle:'#4a7a20',volcano:'#6a3800',ice:'#c8eeff',ruins:'#8a7a50',space:'#3a3a6a',swamp:'#4a6a18'};
+  platforms.forEach(p=>{
+    const sx=p.x-cam.x;if(sx+p.w<0||sx>W)return;
+    ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(sx+3,p.y+4,p.w,p.h);
+    ctx.fillStyle=p.c;ctx.fillRect(sx,p.y,p.w,p.h);
+    if(p.isGround){ctx.fillStyle=tops[currentTheme.deco]||'#6fc850';ctx.fillRect(sx,p.y,p.w,10);}
+    else{ctx.fillStyle='rgba(255,255,255,.13)';ctx.fillRect(sx,p.y,p.w,4);}
+  });
+}
+function drawZones(){
+  specialZones.forEach(z=>{
+    if(z.activated)return;
+    const sx=z.x-cam.x;if(sx+z.w<-20||sx>W+20)return;
+    z.gp=(z.gp||0)+.07;
+    const hc=['#aaf','#fa0','#f44'][z.hits]||'#aaf';
+    const glow=.5+Math.sin(z.gp)*.35;
+    const rg=ctx.createRadialGradient(sx+z.w/2,z.y+z.h/2,4,sx+z.w/2,z.y+z.h/2,z.w*.75);
+    rg.addColorStop(0,`rgba(255,220,50,${glow*.45})`);rg.addColorStop(1,'rgba(255,180,0,0)');
+    ctx.fillStyle=rg;ctx.fillRect(sx-10,z.y-10,z.w+20,z.h+20);
+    ctx.strokeStyle=hc;ctx.lineWidth=2.5+Math.sin(z.gp);ctx.setLineDash([5,3]);ctx.strokeRect(sx,z.y,z.w,z.h);ctx.setLineDash([]);
+    for(let i=0;i<5;i++){ctx.fillStyle=`rgba(255,240,80,${.5+Math.sin(z.gp+i)*.45})`;ctx.beginPath();ctx.arc(sx+6+i*10+Math.sin(z.gp+i)*3,z.y+4+Math.cos(z.gp*.8+i)*3,2.5,0,Math.PI*2);ctx.fill();}
+    if(z.hits>0){ctx.font='7px Press Start 2P';ctx.textAlign='center';ctx.fillStyle=hc;ctx.fillText('★'.repeat(z.hits)+'☆'.repeat(3-z.hits),sx+z.w/2,z.y+z.h+14);ctx.textAlign='left';}
+    ctx.font='bold 13px serif';ctx.textAlign='center';ctx.fillStyle=`rgba(255,220,0,${.7+Math.sin(z.gp*1.3)*.3})`;ctx.fillText('❓',sx+z.w/2,z.y+z.h/2+5);ctx.textAlign='left';
+    if(z.puffTimer>0){ctx.strokeStyle=`rgba(255,255,255,${z.puffTimer/30})`;ctx.lineWidth=4;ctx.strokeRect(sx-2,z.y-2,z.w+4,z.h+4);}
+  });
+}
+function drawSF(){
+  specialFoods.forEach(sf=>{
+    if(sf.got)return;const sx=sf.x-cam.x;if(sx<-100||sx>W+100)return;
+    const bob=Math.sin(sf.anim*.15)*3;const gA=.3+Math.sin(sf.anim*.12)*.2;
+    ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(sx+35,sf.y+72,32,10,0,0,Math.PI*2);ctx.fill();
+    const rg=ctx.createRadialGradient(sx+35,sf.y+35+bob,10,sx+35,sf.y+35+bob,55);rg.addColorStop(0,`rgba(255,220,50,${gA})`);rg.addColorStop(1,'rgba(255,150,0,0)');ctx.fillStyle=rg;ctx.fillRect(sx-20,sf.y-20+bob,110,110);
+    ctx.save();ctx.translate(sx+35,sf.y+35+bob);ctx.rotate(sf.anim*.04);ctx.strokeStyle=`rgba(255,200,0,${.4+Math.sin(sf.anim*.1)*.3})`;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc(0,0,42,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    ctx.font='52px serif';ctx.textAlign='center';ctx.fillText(sf.emoji,sx+35,sf.y+55+bob);
+    ctx.font='bold 7px Press Start 2P';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeText('+10000',sx+35,sf.y-6+bob);ctx.fillStyle='#ffcc00';ctx.fillText('+10000',sx+35,sf.y-6+bob);ctx.textAlign='left';
+  });
+}
+function drawFoods(){foods.forEach(f=>{if(f.got)return;const sx=f.x-cam.x;if(sx<-30||sx>W+30)return;const bob=Math.sin(fc*.06+f.x*.01)*3;ctx.fillStyle='#cc4a1a';ctx.beginPath();ctx.arc(sx+10,f.y+8+bob,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f5f5f5';ctx.fillRect(sx+13,f.y+10+bob,5,14);ctx.beginPath();ctx.arc(sx+15,f.y+25+bob,5,0,Math.PI*2);ctx.fill();});}
+function drawItems(){items.forEach(it=>{if(it.got)return;const sx=it.x-cam.x;if(sx<-40||sx>W+40)return;const bob=Math.sin(fc*.07+it.x*.02)*4;ctx.fillStyle='#1a1a2a';ctx.fillRect(sx,it.y+bob,26,26);ctx.strokeStyle=getIC(it.type);ctx.lineWidth=2;ctx.strokeRect(sx,it.y+bob,26,26);ctx.font='13px serif';ctx.textAlign='center';ctx.fillText({speed:'⚡',power:'👊',shield:'🛡️',heal:'❤️'}[it.type],sx+13,it.y+19+bob);ctx.textAlign='left';});}
+function drawLighter(){
+  if(lighter.got)return;const sx=lighter.x-cam.x;if(sx<-60||sx>W+60)return;
+  const glow=.4+Math.sin(fc*.1)*.35;const rg=ctx.createRadialGradient(sx+15,lighter.y+14,4,sx+15,lighter.y+14,38);rg.addColorStop(0,`rgba(255,160,0,${glow})`);rg.addColorStop(1,'rgba(255,100,0,0)');ctx.fillStyle=rg;ctx.fillRect(sx-22,lighter.y-22,74,74);
+  ctx.fillStyle='#c83000';ctx.fillRect(sx+2,lighter.y+7,18,22);ctx.fillStyle='#888';ctx.fillRect(sx,lighter.y,22,9);
+  ctx.fillStyle=`rgba(255,220,40,${glow+.2})`;ctx.beginPath();ctx.ellipse(sx+11,lighter.y-5,6,10,0,0,Math.PI*2);ctx.fill();
+  ctx.font='6px Press Start 2P';ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.fillText('GOAL',sx+11,lighter.y+44);ctx.textAlign='left';
+}
+
+function drawEnemies(){
+  enemies.forEach(en=>{
+    if(!en.alive)return;const sx=en.x-cam.x;if(sx<-100||sx>W+100)return;
+    ctx.save();if(en.dir<0){ctx.scale(-1,1);ctx.translate(-(sx*2+en.w),0);}
+    if(en.stunTimer>0&&Math.floor(fc/3)%2===0)ctx.globalAlpha=.4;
+    switch(en.type){case 'dino':dDino(sx,en.y,en.animT,en.aggroTimer>0);break;case 'mammoth':dMammoth(sx,en.y,en.animT,en.aggroTimer>0);break;case 'spider':dSpider(sx,en.y,en.animT);break;case 'bird':dBird(sx,en.y,en.animT);break;default:dDino(sx,en.y,en.animT,false);}
+    ctx.globalAlpha=1;ctx.restore();
+    const hm=en.type==='mammoth'?4:2;ctx.fillStyle='#111';ctx.fillRect(sx,en.y-12,en.w,6);ctx.fillStyle=en.hp<=1?'#f00':'#0c0';ctx.fillRect(sx,en.y-12,en.w*(en.hp/hm),6);
+    if(en.aggroTimer>60){ctx.font='10px serif';ctx.textAlign='center';ctx.fillText('❗',sx+en.w/2,en.y-18);ctx.textAlign='left';}
+  });
+}
+function drawBoss(){
+  if(!boss||!boss.alive||!boss.active)return;
+  const sx=boss.x-cam.x;if(sx<-120||sx>W+120)return;
+  ctx.save();if(boss.stunTimer>0&&Math.floor(fc/3)%2===0)ctx.globalAlpha=.35;
+  if(boss.dir<0){ctx.scale(-1,1);ctx.translate(-(sx*2+boss.w),0);}
+  switch(boss.type){
+    case'trex':dBTrex(sx,boss.y,boss.animT,boss.phase);break;
+    case'sabertooth':dBSaber(sx,boss.y,boss.animT,boss.phase);break;
+    case'gigantor':dBGigantor(sx,boss.y,boss.animT,boss.phase);break;
+    case'hydra':dBHydra(sx,boss.y,boss.animT,boss.phase);break;
+    case'mech':dBMech(sx,boss.y,boss.animT,boss.phase);break;
+    default:dBTrex(sx,boss.y,boss.animT,boss.phase);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+  const bpw=280,bpx=W/2-140,by=10;
+  ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(bpx-2,by-2,bpw+4,18);ctx.fillStyle='#300';ctx.fillRect(bpx,by,bpw,14);
+  ctx.fillStyle=boss.phase===2?'#f40':boss.hp/boss.maxHp<.3?'#f80':'#c00';ctx.fillRect(bpx,by,bpw*(boss.hp/boss.maxHp),14);
+  ctx.fillStyle='rgba(255,255,255,.15)';ctx.fillRect(bpx,by,bpw,5);
+  ctx.font='6px Press Start 2P';ctx.textAlign='center';ctx.fillStyle='#fff';
+  const bn={trex:'🦕 KING REX',sabertooth:'🐯 SABERTOOTH',gigantor:'💀 GIGANTOR',hydra:'🐉 HYDRA',mech:'🤖 MECHDON'};
+  ctx.fillText((bn[boss.type]||'BOSS')+(boss.phase===2?' [ENRAGED]':'')+` S${sn}`,W/2,by+25);ctx.textAlign='left';
+}
+
+function drawPlayer(){
+  const sx=player.x-cam.x;
+  const flash=player.hitTimer>0&&Math.floor(fc/4)%2===0;
+  if(flash)ctx.globalAlpha=.3;
+  const vip=getVIP();
+  const wl=vip?getWL():1;
+  if(getVIPP()&&vippToggles.rainbow){
+    // 레인보우 링
+    const h=(fc*3)%360;const ra=.25+Math.sin(fc*.1)*.1;
+    ctx.fillStyle=`hsla(${h},100%,60%,${ra})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,46,46,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=`hsla(${(h+120)%360},100%,60%,${ra*.6})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,36,36,0,0,Math.PI*2);ctx.fill();
+  }else if(getVIPP()){
+    const pa=.14+Math.sin(fc*.08)*.07;ctx.fillStyle=`rgba(170,0,255,${pa})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,40,40,0,0,Math.PI*2);ctx.fill();
+  }
+  if(vip&&!getVIPP()){const oa=.12+Math.sin(fc*.08)*.07;ctx.fillStyle=`rgba(255,215,0,${oa})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,38,38,0,0,Math.PI*2);ctx.fill();}
+  // Lv2 불꽃 오라
+  if(vip&&wl>=2){
+    const fa=.15+Math.sin(fc*.12)*.08;
+    ctx.fillStyle=`rgba(255,${wl===3?100:160},0,${fa})`;
+    ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,32+wl*4,32+wl*4,0,0,Math.PI*2);ctx.fill();
+  }
+  if(powerup.shield>0){ctx.fillStyle=`rgba(100,100,255,${.2+Math.sin(fc*.15)*.1})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,30,30,0,0,Math.PI*2);ctx.fill();}
+  // 대쉬 중 이펙트
+  if(dashTimer>0){ctx.fillStyle=`rgba(0,200,255,${.35+Math.sin(fc*.2)*.15})`;ctx.beginPath();ctx.ellipse(sx+player.w/2,player.y+player.h/2,36,30,0,0,Math.PI*2);ctx.fill();}
+  if(powerup.speed>0){for(let i=1;i<=3;i++){ctx.globalAlpha=(flash?.3:1)*(.25-i*.07);ctx.fillStyle='#0cf';ctx.fillRect(sx-player.dir*i*7+2,player.y+10,player.w-4,player.h-10);}ctx.globalAlpha=flash?.3:1;}
+  ctx.save();
+  if(player.dir<0){ctx.scale(-1,1);ctx.translate(-(sx*2+player.w),0);}
+  const lw=player.onGround&&Math.abs(player.vx)>.5?Math.sin(player.animT*.35)*7:0;
+  const jq=!player.onGround?(player.vy<0?.88:1.08):1;
+  ctx.save();ctx.translate(sx+player.w/2,player.y+player.h);ctx.scale(1/jq,jq);ctx.translate(-player.w/2,-player.h);
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(player.w/2,player.h+3,20,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7a4a20';ctx.fillRect(5,30,12,16+lw);ctx.fillRect(18,30,12,16-lw);
+  ctx.fillStyle='#5a3010';ctx.fillRect(3,44+lw,16,7);ctx.fillRect(16,44-lw,16,7);
+  ctx.fillStyle='#8B6914';ctx.fillRect(2,24,30,12);
+  ctx.fillStyle=powerup.power>0?'#e84000':'#c87830';ctx.fillRect(2,10,30,22);
+  ctx.fillStyle='#d4924a';ctx.fillRect(6,0,24,18);ctx.fillStyle='#3a1a08';ctx.fillRect(6,0,24,6);
+  ctx.fillStyle='#fff';ctx.fillRect(9,6,6,6);ctx.fillStyle='#1a3aaa';ctx.fillRect(10,7,4,4);ctx.fillStyle='#000';ctx.fillRect(11,7,2,2);
+  if(vip){ctx.font='11px serif';ctx.textAlign='center';ctx.fillText('👑',player.w/2,-6);ctx.textAlign='left';}
+  if(player.atkTimer>0){
+    // 무기 레벨별 시각화
+    ctx.fillStyle='#c87830';ctx.fillRect(30,12,12,9);
+    if(wl===1){ctx.fillStyle=powerup.power>0?'#f60':'#6a3808';ctx.fillRect(38,-7,8,30);ctx.fillStyle='rgba(255,220,0,'+player.atkTimer/20+')';ctx.beginPath();ctx.arc(50,-6,10,0,Math.PI*2);ctx.fill();}
+    else if(wl===2){ctx.fillStyle='#ff4400';ctx.fillRect(36,-12,10,36);for(let i=0;i<3;i++){ctx.fillStyle=`rgba(255,${140+i*30},0,${player.atkTimer/21})`;ctx.beginPath();ctx.arc(52,-6+i*8,8-i,0,Math.PI*2);ctx.fill();}}
+    else{ctx.fillStyle='#ffaa00';ctx.fillRect(34,-18,12,44);ctx.strokeStyle=`rgba(255,220,0,${player.atkTimer/22})`;ctx.lineWidth=3;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(52,-10+i*10,10-i*1.5,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='rgba(80,200,255,'+player.atkTimer/22+')';ctx.beginPath();ctx.arc(52,-10,14,0,Math.PI*2);ctx.fill();}
+  }else{ctx.fillStyle='#c87830';ctx.fillRect(28,14,10,12);ctx.fillStyle=vip&&wl>=2?['#ff4400','#ffaa00'][wl-2]:'#6a3808';ctx.fillRect(33,22,8,22);}
+  ctx.restore();ctx.restore();ctx.globalAlpha=1;
+}
+
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.save();const a=p.life/p.maxLife;
+    if(p.type==='smoke'){ctx.globalAlpha=a*.7;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x-cam.x,p.y,p.size*(2-a),0,Math.PI*2);ctx.fill();}
+    else{ctx.globalAlpha=a;ctx.fillStyle=p.color;const s=p.size*a;ctx.fillRect(p.x-cam.x-s/2,p.y-s/2,s,s);}
+    ctx.restore();
+  });ctx.globalAlpha=1;
+}
+function drawFloats(){floats.forEach(f=>{ctx.globalAlpha=Math.min(1,f.life/f.maxLife*2.5);ctx.font='bold 9px Press Start 2P';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeText(f.text,f.x-cam.x,f.y);ctx.fillStyle='#fff';ctx.fillText(f.text,f.x-cam.x,f.y);});ctx.globalAlpha=1;}
+
+function drawHUDOv(){
+  const tot=foods.length,got=foods.filter(f=>f.got).length;
+  const bw=180,bx=W/2-90,by=H-22;
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(bx-2,by-14,bw+4,24);ctx.fillStyle='#333';ctx.fillRect(bx,by,bw,10);ctx.fillStyle='#fc0';ctx.fillRect(bx,by,bw*(got/tot),10);
+  ctx.font='6px Press Start 2P';ctx.textAlign='center';ctx.fillStyle='#ccc';ctx.fillText(`FOOD ${got}/${tot}`,W/2,by-3);
+  ctx.font='7px Press Start 2P';ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText(currentTheme.name,W/2,H-5);ctx.textAlign='left';
+  if(!lighterGot&&lighter.x-cam.x>W-20){ctx.font='8px Press Start 2P';ctx.fillStyle='rgba(255,160,0,.88)';ctx.textAlign='right';ctx.fillText('🔥 ►',W-8,22);ctx.textAlign='left';}
+  if(boss&&boss.alive&&!boss.active&&boss.x-cam.x>W-20){ctx.font='8px Press Start 2P';ctx.fillStyle='rgba(255,0,0,.9)';ctx.textAlign='right';ctx.fillText('⚠ ►',W-8,36);ctx.textAlign='left';}
+  const dz=specialZones.filter(z=>z.activated).length;
+  ctx.font='6px Press Start 2P';ctx.fillStyle='rgba(255,220,80,.8)';ctx.textAlign='right';ctx.fillText(`✨${dz}/${specialZones.length}`,W-8,H-8);ctx.textAlign='left';
+  if(getVIPP()){
+    ctx.font='6px Press Start 2P';ctx.fillStyle='rgba(204,68,255,.95)';ctx.textAlign='right';ctx.fillText('💜VIP+',W-8,H-20);ctx.textAlign='left';
+  }else if(getVIP()){
+    ctx.font='6px Press Start 2P';ctx.fillStyle='rgba(255,215,0,.9)';ctx.textAlign='right';ctx.fillText('👑VIP',W-8,H-20);ctx.textAlign='left';
+    // 대쉬 쿨다운 게이지
+    const maxCD=150;const dw=70,dx2=6,dy2=H-60;
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(dx2,dy2,dw,8);
+    if(dashCooldown<=0){ctx.fillStyle='#0cf';ctx.fillRect(dx2,dy2,dw,8);}
+    else{ctx.fillStyle='rgba(0,150,200,.5)';ctx.fillRect(dx2,dy2,dw*((maxCD-dashCooldown)/maxCD),8);}
+    ctx.font='5px Press Start 2P';ctx.fillStyle=dashCooldown<=0?'#0cf':'#006688';ctx.fillText(dashCooldown<=0?'💨DASH':'💨'+(Math.ceil(dashCooldown/60)*1).toFixed(0)+'s',dx2,dy2-3);
+    // 무기 레벨 표시
+    const wl=getWL();const wColors=['','#aaa','#f80','#ffd700'];
+    ctx.fillStyle=wColors[wl]||'#aaa';ctx.font='6px Press Start 2P';ctx.fillText(`⚔Lv${wl}`,dx2,dy2+22);
+    // 더블점프 표시
+    ctx.fillStyle=jumpCount>=2?'#444':(jumpCount===1?'#ffd700':'#888');
+    ctx.fillText(jumpCount>=2?'🦘 USED':'🦘 READY',dx2,dy2+36);
+  }
+  const ds=Math.min(10,Math.floor(sn/3));
+  if(ds>0){ctx.font='7px serif';ctx.fillStyle='rgba(255,100,0,.8)';ctx.fillText('🔥'.repeat(ds),6,H-8);}
+}
+function drawPUInds(){
+  let xi=6;const py=H-44;
+  if(powerup.speed>0){ctx.fillStyle='rgba(0,200,255,.7)';ctx.fillRect(xi,py,44,14);ctx.fillStyle='#fff';ctx.font='6px Press Start 2P';ctx.fillText('⚡'+Math.ceil(powerup.speed/60)+'s',xi+2,py+10);xi+=50;}
+  if(powerup.power>0){ctx.fillStyle='rgba(255,100,0,.7)';ctx.fillRect(xi,py,44,14);ctx.fillStyle='#fff';ctx.fillText('👊'+Math.ceil(powerup.power/60)+'s',xi+2,py+10);xi+=50;}
+  if(powerup.shield>0){ctx.fillStyle='rgba(100,100,255,.7)';ctx.fillRect(xi,py,44,14);ctx.fillStyle='#fff';ctx.fillText('🛡'+Math.ceil(powerup.shield/60)+'s',xi+2,py+10);}
+}
+
+// ── ENEMY / BOSS DRAW ──
+function dDino(x,y,t,a){const lw=Math.sin(t*.3)*5;const c=a?'#4aaa28':'#2a8a18';ctx.fillStyle=c;ctx.fillRect(x+6,y+8,26,22);ctx.fillRect(x+24,y,18,16);ctx.fillStyle='#fff';ctx.fillRect(x+33,y+3,6,6);ctx.fillStyle=a?'#f00':'#000';ctx.fillRect(x+35,y+4,4,4);ctx.fillStyle='#f00';ctx.fillRect(x+33,y+9,12,3);ctx.fillStyle='#1a7010';ctx.fillRect(x+8,y+28,10,12+lw);ctx.fillRect(x+20,y+28,10,12-lw);}
+function dMammoth(x,y,t,a){const lw=Math.sin(t*.25)*5;const c=a?'#9a6828':'#7a5010';ctx.fillStyle=c;ctx.fillRect(x+2,y+6,38,24);ctx.fillRect(x+28,y,16,16);ctx.fillStyle='#f0dda0';ctx.fillRect(x+41,y+9,14,4);ctx.fillStyle='#fff';ctx.fillRect(x+32,y+3,6,6);ctx.fillStyle=a?'#f00':'#000';ctx.fillRect(x+34,y+4,4,4);ctx.fillStyle='#6a4008';ctx.fillRect(x+4,y+28,12,12+lw);ctx.fillRect(x+24,y+28,12,12-lw);}
+function dSpider(x,y,t){const b=Math.sin(t*.3)*3;ctx.fillStyle='#220a40';ctx.beginPath();ctx.arc(x+18,y+18+b,14,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+18,y+6+b,9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f00';[-5,-1,3,7].forEach(ox=>{ctx.beginPath();ctx.arc(x+14+ox,y+5+b,2.5,0,Math.PI*2);ctx.fill();});ctx.strokeStyle='#330a55';ctx.lineWidth=2.5;[-55,-25,25,55].forEach((a,i)=>{const r=a*Math.PI/180,lx=x+18+Math.cos(r)*23,ly=y+18+b+Math.sin(r)*15+Math.sin(t*.3+i)*5;ctx.beginPath();ctx.moveTo(x+18,y+18+b);ctx.lineTo(lx,ly);ctx.stroke();const r2=(180+a)*Math.PI/180;ctx.beginPath();ctx.moveTo(x+18,y+18+b);ctx.lineTo(x+18+Math.cos(r2)*23,y+18+b+Math.sin(r2)*15+Math.sin(t*.3+i)*5);ctx.stroke();});}
+function dBird(x,y,t){const f=Math.sin(t*.5)*9;ctx.fillStyle='#aa3300';ctx.beginPath();ctx.arc(x+18,y+12,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cc5500';ctx.beginPath();ctx.moveTo(x+10,y+12);ctx.lineTo(x-8,y+f);ctx.lineTo(x+10,y+20);ctx.fill();ctx.beginPath();ctx.moveTo(x+26,y+12);ctx.lineTo(x+44,y+f);ctx.lineTo(x+26,y+20);ctx.fill();ctx.fillStyle='#ffcc00';ctx.fillRect(x+29,y+8,10,5);}
+function dBTrex(x,y,t,ph){const lw=Math.sin(t*.28)*8;const c=ph===2?'#c02020':'#2a8a18';ctx.fillStyle=c;ctx.fillRect(x+4,y+6,36,32);ctx.fillRect(x+24,y,22,20);ctx.fillStyle='#fff';ctx.fillRect(x+33,y+3,6,6);ctx.fillStyle=ph===2?'#f00':'#000';ctx.fillRect(x+35,y+4,4,4);ctx.fillStyle='#f00';ctx.fillRect(x+33,y+9,12,3);ctx.fillStyle='#1a6a10';ctx.fillRect(x+8,y+36,14,16+lw);ctx.fillRect(x+26,y+36,14,16-lw);}
+function dBSaber(x,y,t,ph){const lw=Math.sin(t*.28)*7;const c=ph===2?'#b06820':'#e08828';ctx.fillStyle=c;ctx.fillRect(x+2,y+12,40,28);ctx.fillRect(x+34,y,20,22);ctx.fillStyle='#fff';ctx.fillRect(x+38,y+4,8,8);ctx.fillStyle=ph===2?'#f00':'#000';ctx.fillRect(x+40,y+5,5,5);ctx.fillStyle='#f0f0f0';ctx.beginPath();ctx.moveTo(x+42,y+14);ctx.lineTo(x+36,y+28);ctx.lineTo(x+44,y+28);ctx.fill();ctx.beginPath();ctx.moveTo(x+50,y+14);ctx.lineTo(x+44,y+28);ctx.lineTo(x+52,y+28);ctx.fill();ctx.fillStyle=c;ctx.fillRect(x+4,y+38,14,14+lw);ctx.fillRect(x+22,y+38,14,14-lw);}
+function dBGigantor(x,y,t,ph){const lw=Math.sin(t*.22)*9;const c=ph===2?'#505050':'#707070';ctx.fillStyle=c;ctx.fillRect(x+2,y+8,60,40);ctx.fillRect(x+44,y,26,24);ctx.fillStyle='#ff2200';ctx.fillRect(x+52,y+4,10,10);ctx.fillStyle='#f0f0f0';for(let i=0;i<5;i++)ctx.fillRect(x+47+i*5,y+20,3,7);ctx.fillStyle=c;ctx.fillRect(x+6,y+46,18,18+lw);ctx.fillRect(x+36,y+46,18,18-lw);ctx.fillStyle='#303030';ctx.fillRect(x+4,y+62+lw,22,9);ctx.fillRect(x+34,y+62-lw,22,9);}
+function dBHydra(x,y,t,ph){
+  const c=ph===2?'#005500':'#007700';const lw=Math.sin(t*.2)*6;
+  ctx.fillStyle=c;ctx.fillRect(x+8,y+20,44,40);
+  [-18,0,18].forEach((ox,i)=>{
+    const ny=y-30-i*8;
+    ctx.fillStyle=c;ctx.fillRect(x+26+ox-6,ny+10,12,40);
+    ctx.fillStyle=ph===2?'#003300':'#005500';ctx.fillRect(x+26+ox-10,ny,20,18);
+    ctx.fillStyle='#ff0';ctx.fillRect(x+26+ox-6,ny+4,5,5);ctx.fillRect(x+26+ox+2,ny+4,5,5);
+    ctx.fillStyle='#f00';ctx.fillRect(x+26+ox-8,ny+12,24,4);
+  });
+  ctx.fillStyle=c;ctx.fillRect(x+4,y+54,14,14+lw);ctx.fillRect(x+42,y+54,14,14-lw);
+}
+function dBMech(x,y,t,ph){
+  const c=ph===2?'#3a3aff':'#6060ff';const lw=Math.sin(t*.22)*8;const glow=.4+Math.sin(fc*.12)*.3;
+  ctx.fillStyle='#2a2a4a';ctx.fillRect(x,y+6,70,44);ctx.fillStyle=c;ctx.fillRect(x+2,y+8,66,40);
+  ctx.fillStyle='#1a1a3a';for(let i=0;i<4;i++)ctx.fillRect(x+6+i*17,y+12,12,28);
+  ctx.fillStyle=c;ctx.fillRect(x+16,y,32,20);ctx.fillStyle=`rgba(0,200,255,${glow})`;ctx.fillRect(x+22,y+4,18,8);
+  ctx.fillStyle='#fff';ctx.fillRect(x+24,y+5,6,6);ctx.fillRect(x+32,y+5,6,6);
+  ctx.fillStyle=c;ctx.fillRect(x-16,y+12,20,10);ctx.fillRect(x+66,y+12,20,10);
+  ctx.fillStyle='#1a1a3a';ctx.fillRect(x+66,y+14,28,6);ctx.fillStyle=`rgba(255,50,0,${glow})`;ctx.beginPath();ctx.arc(x+96,y+17,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2a2a4a';ctx.fillRect(x+8,y+48,18,18+lw);ctx.fillRect(x+44,y+48,18,18-lw);ctx.fillStyle='#1a1a3a';ctx.fillRect(x+6,y+64+lw,22,9);ctx.fillRect(x+42,y+64-lw,22,9);
+}
+
+function loop(){if(gs==='playing'){update();draw();}else if(gs==='paused'){draw();}requestAnimationFrame(loop);}
+loop();
+// init weapon display
+setWeaponLevel(1);
+</script>
+</body>
+</html>
