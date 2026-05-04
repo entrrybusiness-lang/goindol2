@@ -508,6 +508,12 @@ canvas{display:block;border:3px solid var(--gold);}
       💰 <b>시작 보너스 +50000점</b> — VIP의 10배!<br>
       🌈 <b>레인보우 오라</b> — 전용 무지개 이펙트!<br>
       💜 <b>인게임 VIP+ 왕관 표시</b> — 특별 아이콘!<br>
+      ⚔️ <b>무기 강화 Lv4·Lv5 전용</b> — 썬더볼(Lv4) · 레이저빔(Lv5) VIP+만 사용!<br>
+      💥 <b>폭발 공격</b> — Space 2연타 → 반경 100px 전체 폭발! (5초 쿨)<br>
+      ⏸️ <b>시간 정지 스킬</b> — T키로 3초간 모든 적 완전 정지! (60초 쿨)<br>
+      💊 <b>자동 힐</b> — HP 위기 시 자동으로 1 회복! (30초 쿨)<br>
+      ⚡ <b>경험치 레벨 시스템</b> — 레벨업마다 +2000점 자동 지급!<br>
+      🗺️ <b>미니맵</b> — 화면 우상단 실시간 적·라이터 위치 표시!<br>
     </div>
     <div class="vipp-price">월 5,000원</div>
     <div class="vipp-bank">
@@ -570,6 +576,55 @@ canvas{display:block;border:3px solid var(--gold);}
         <span class="vippdash-toggle-name">🌈 레인보우 오라</span>
         <button class="toggle-btn on" id="toggle-rainbow" onclick="toggleVippFeature('rainbow')">ON</button>
       </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">⏸️ 시간 정지 스킬 (T키, 60초 쿨)</span>
+        <button class="toggle-btn on" id="toggle-timestop" onclick="toggleVippFeature('timestop')">ON</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">💊 자동 힐 (HP≤1 시 자동 회복, 30초 쿨)</span>
+        <button class="toggle-btn on" id="toggle-autoheal" onclick="toggleVippFeature('autoheal')">ON</button>
+      </div>
+      <div class="vippdash-toggle" style="margin-top:6px;">
+        <span class="vippdash-toggle-name">🗺️ 미니맵 표시</span>
+        <button class="toggle-btn on" id="toggle-minimap" onclick="toggleVippFeature('minimap')">ON</button>
+      </div>
+    </div>
+
+    <!-- VIP+ 무기 강화 Lv4·5 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">⚔️ 무기 강화 — VIP+는 Lv1~5 전체 사용 가능!</div>
+      <div style="display:flex;gap:5px;margin-bottom:7px;">
+        <button id="vipp-wlv-1" onclick="setWeaponLevel(1)" style="flex:1;padding:9px 2px;border:2px solid #553300;background:rgba(0,0,0,.5);color:#886644;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;line-height:2;">Lv1<br><span style="font-size:5px;color:#554422;">기본</span></button>
+        <button id="vipp-wlv-2" onclick="setWeaponLevel(2)" style="flex:1;padding:9px 2px;border:2px solid #553300;background:rgba(0,0,0,.5);color:#886644;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;line-height:2;">Lv2<br><span style="font-size:5px;color:#554422;">강화</span></button>
+        <button id="vipp-wlv-3" onclick="setWeaponLevel(3)" style="flex:1;padding:9px 2px;border:2px solid #553300;background:rgba(0,0,0,.5);color:#886644;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;line-height:2;">Lv3<br><span style="font-size:5px;color:#554422;">번개</span></button>
+        <button id="vipp-wlv-4" onclick="setWeaponLevel(4)" style="flex:1;padding:9px 2px;border:2px solid #cc44ff;background:rgba(170,0,255,.15);color:#cc44ff;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;line-height:2;">Lv4<br><span style="font-size:5px;">썬더볼</span></button>
+        <button id="vipp-wlv-5" onclick="setWeaponLevel(5)" style="flex:1;padding:9px 2px;border:2px solid #ff88ff;background:rgba(200,0,255,.22);color:#ff88ff;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;text-align:center;line-height:2;">Lv5<br><span style="font-size:5px;">레이저</span></button>
+      </div>
+      <div id="vipp-weap-desc" style="color:#664488;font-size:5.5px;line-height:2;padding:7px 8px;background:rgba(0,0,0,.45);border:1px solid #2a0044;">⚔️ 레벨을 선택하세요 · Lv4·5는 VIP+ 전용</div>
+    </div>
+
+    <!-- VIP+ 경험치 레벨 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">⚡ VIP+ 경험치 레벨</div>
+      <div style="background:#0a0018;border:1px solid #440066;padding:9px 10px;">
+        <div style="display:flex;justify-content:space-between;color:#884499;font-size:6px;margin-bottom:5px;">
+          <span id="vipp-lv-label">Lv 1</span>
+          <span id="vipp-exp-label">0 / 1000 EXP</span>
+        </div>
+        <div style="height:9px;background:#1a0030;border-radius:4px;overflow:hidden;">
+          <div id="vipp-exp-fill" style="height:9px;background:linear-gradient(90deg,#8800ff,#cc44ff);border-radius:4px;width:0%;transition:width .4s;"></div>
+        </div>
+        <div style="color:#553366;font-size:5px;margin-top:5px;line-height:2;">적처치 +50EXP · 보스 +500EXP · 스테이지클리어 +200EXP · 레벨업 → +2000점!</div>
+      </div>
+    </div>
+
+    <!-- VIP+ 스킬 버튼 -->
+    <div class="vippdash-section">
+      <div class="vippdash-label">💥 폭발 공격 &nbsp;|&nbsp; ⏸️ 시간 정지</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="if(typeof triggerBlast==='function')triggerBlast()" style="flex:1;padding:10px 4px;background:rgba(255,80,0,.18);border:2px solid #f80;color:#f80;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;line-height:2;">💥 폭발 공격<br><span style="font-size:5px;color:#884400">Space 2연타 / 5초쿨</span></button>
+        <button onclick="if(typeof triggerTimeStop==='function')triggerTimeStop()" style="flex:1;padding:10px 4px;background:rgba(0,80,255,.18);border:2px solid #4af;color:#4af;font-family:'Press Start 2P',monospace;font-size:6px;cursor:pointer;line-height:2;">⏸️ 시간 정지<br><span style="font-size:5px;color:#224488">T키 / 60초쿨</span></button>
+      </div>
     </div>
 
     <!-- 혜택 목록 -->
@@ -586,6 +641,12 @@ canvas{display:block;border:3px solid var(--gold);}
         <div class="vippdash-perk-item"><span class="pi-icon">💰</span><span class="pi-name">+50000점</span><span class="pi-desc">시작 보너스</span></div>
         <div class="vippdash-perk-item"><span class="pi-icon">🌈</span><span class="pi-name">레인보우 오라</span><span class="pi-desc">전용 이펙트</span></div>
         <div class="vippdash-perk-item"><span class="pi-icon">💜</span><span class="pi-name">VIP+ 왕관</span><span class="pi-desc">특별 표시</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">⚔️</span><span class="pi-name">무기 Lv4·5</span><span class="pi-desc">썬더볼·레이저</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">💥</span><span class="pi-name">폭발 공격</span><span class="pi-desc">Space 2연타</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">⏸️</span><span class="pi-name">시간 정지</span><span class="pi-desc">T키 / 60초쿨</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">💊</span><span class="pi-name">자동 힐</span><span class="pi-desc">HP위기 자동회복</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">⚡</span><span class="pi-name">경험치 레벨</span><span class="pi-desc">레벨업+2000점</span></div>
+        <div class="vippdash-perk-item"><span class="pi-icon">🗺️</span><span class="pi-name">미니맵</span><span class="pi-desc">실시간 표시</span></div>
       </div>
     </div>
 
@@ -614,7 +675,9 @@ canvas{display:block;border:3px solid var(--gold);}
       🏆 보스 처치 점수 +30% 보너스<br>
       🦘 <b style="color:#ffd700">더블점프</b> — 공중에서 한 번 더 점프!<br>
       💨 <b style="color:#0cf">대쉬</b> — C키/버튼으로 순간이동!<br>
-      ⚔️ <b style="color:#f80">무기 업그레이드</b> — Lv1~3 강화 가능!<br>
+      ⚔️ <b style="color:#f80">무기 업그레이드 Lv1~3</b> — VIP 대시보드에서 강화!<br>
+      💥 <b style="color:#f80">폭발 공격</b> — Space 2연타 → 주변 전체 폭발! (5초 쿨)<br>
+      📈 <b style="color:#ffd700">플레이 히스토리 그래프</b> — 최근 10판 점수 차트!<br>
       🎨 황금 파티클 VIP 전용 이펙트<br>
       👑 인게임 왕관 표시 + 황금 오라<br>
     </div>
@@ -911,25 +974,48 @@ function openLeaderboard(){
 // weapon level management
 let _weaponLevel=1;
 function setWeaponLevel(lv){
+  // Lv4·5는 VIP+만 사용 가능
+  if((lv===4||lv===5)&&!window._isVIPP){
+    showNotif('💜 Lv4·Lv5는 VIP+ 전용입니다!','#cc44ff',2000);return;
+  }
   _weaponLevel=lv;
   window._weaponLevel=lv;
+  // VIP 대시보드 버튼 (Lv1~3)
   [1,2,3].forEach(i=>{
-    document.getElementById('wlv-'+i).classList.toggle('active',i===lv);
+    const el=document.getElementById('wlv-'+i);
+    if(el)el.classList.toggle('active',i===lv);
+  });
+  // VIP+ 대시보드 버튼 (Lv1~5) 동기화
+  [1,2,3,4,5].forEach(i=>{
+    const el=document.getElementById('vipp-wlv-'+i);
+    if(!el)return;
+    if(i===lv){el.style.boxShadow='0 0 10px currentColor';el.style.opacity='1';}
+    else{el.style.boxShadow='none';el.style.opacity='0.5';}
   });
   const descs={
-    1:'Lv1: 기본 공격 범위 48px / 데미지 1 / 이펙트 없음',
-    2:'Lv2: 공격 범위 72px / 데미지 2 / 불꽃 이펙트 + 넉백 강화',
-    3:'Lv3: 공격 범위 100px / 데미지 3 / 번개 이펙트 + 광역 판정'
+    1:'⚔️ Lv1: 범위 48px / 데미지 1 / 기본 공격',
+    2:'🔥 Lv2: 범위 72px / 데미지 2 / 불꽃 이펙트 + 넉백 강화',
+    3:'⚡ Lv3: 범위 100px / 데미지 3 / 번개 이펙트 + 광역 판정',
+    4:'💜 Lv4: 범위 130px / 데미지 4 / 썬더볼 [VIP+ 전용]',
+    5:'🌟 Lv5: 범위 160px / 데미지 6 / 레이저빔 MAX [VIP+ 전용]'
   };
-  document.getElementById('vd-weapdesc').textContent=descs[lv];
+  const descEl=document.getElementById('vd-weapdesc');
+  if(descEl)descEl.textContent=descs[lv];
+  const vippDescEl=document.getElementById('vipp-weap-desc');
+  if(vippDescEl)vippDescEl.textContent=descs[lv];
   document.getElementById('vd-weaponlv').textContent='Lv'+lv;
   document.getElementById('hud-weapon-lv').textContent=lv;
   const btn=document.getElementById('vdash-upgrade-btn');
-  if(lv>=3){btn.textContent='⚔️ MAX 레벨 달성!';btn.disabled=true;}
-  else{btn.textContent='⚔️ Lv'+(lv+1)+' 강화 (다음 게임 적용)';btn.disabled=false;}
+  if(btn){
+    if(lv>=5){btn.textContent='⚔️ MAX 레벨 달성!';btn.disabled=true;}
+    else if(lv>=3&&!window._isVIPP){btn.textContent='⚔️ Lv'+(lv+1)+' (VIP+ 전용)';btn.disabled=false;}
+    else{btn.textContent='⚔️ Lv'+(lv+1)+' 강화';btn.disabled=false;}
+  }
 }
 function upgradeWeapon(){
-  if(_weaponLevel<3){setWeaponLevel(_weaponLevel+1);showNotif('⚔️ 무기 Lv'+_weaponLevel+' 강화!','#f80',2000);}
+  const maxLv=window._isVIPP?5:3;
+  if(_weaponLevel<maxLv){setWeaponLevel(_weaponLevel+1);showNotif('⚔️ 무기 Lv'+_weaponLevel+' 강화!','#f80',2000);}
+  else{showNotif('⚔️ 이미 MAX 레벨입니다!','#f80',1500);}
 }
 function switchLbTab(tab){
   document.getElementById('lb-tab-all').classList.toggle('active',tab==='all');
@@ -2446,634 +2532,3 @@ setWeaponLevel(1);
 </script>
 </body>
 </html>
-<!-- ══════════════════════════════════════════════════════════
-     ★ 10개 기능 패치 ★
-══════════════════════════════════════════════════════════ -->
-
-<!-- ①+⑧ VIP+ 무기 강화 Lv4·Lv5 + 무한 쿠폰 CSS -->
-<style>
-/* Lv4·5 버튼 */
-.wlv-btn.vipp-only{border-color:#cc44ff;color:#6a0088;}
-.wlv-btn.vipp-only:hover:not(.active){border-color:#cc44ff;color:#cc44ff;}
-.wlv-btn.vipp-only.active{border-color:#cc44ff;background:rgba(170,0,255,.2);color:#cc44ff;}
-
-/* ③ 경험치 바 */
-#vipp-exp-bar-wrap{background:#0a0018;border:1px solid #440066;padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
-#vipp-exp-bar-wrap .exp-label{color:#884499;font-size:6px;display:flex;justify-content:space-between;}
-#vipp-exp-track{height:8px;background:#1a0030;border-radius:4px;overflow:hidden;}
-#vipp-exp-fill{height:8px;background:linear-gradient(90deg,#8800ff,#cc44ff);border-radius:4px;transition:width .4s;}
-
-/* ⑤ 시간 정지 버튼 */
-#btn-timestop{background:linear-gradient(90deg,#003366,#0066cc,#003366);border:none;color:#fff;font-family:'Press Start 2P',monospace;font-size:6px;padding:7px 10px;cursor:pointer;white-space:nowrap;}
-#btn-timestop:disabled{background:#111;color:#333;cursor:not-allowed;}
-.vippdash-toggle-ts{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(0,0,0,.4);border:1px solid #002244;}
-
-/* ⑥ 히스토리 그래프 */
-#vd-history-wrap{padding:8px;background:#0a0900;border:1px solid #221a00;}
-#vd-history-canvas{width:100%;height:70px;display:block;}
-
-/* ⑦ 미니맵 */
-#minimap-canvas{position:absolute;top:6px;right:6px;border:1px solid rgba(204,68,255,.4);background:rgba(0,0,0,.55);display:none;z-index:86;}
-</style>
-
-<!-- ⑦ 미니맵 캔버스 -->
-<script>
-(function(){
-  const mm=document.createElement('canvas');
-  mm.id='minimap-canvas';mm.width=120;mm.height=48;
-  // 게임 wrapper 안에 삽입
-  const w=document.getElementById('wrapper');
-  if(w)w.appendChild(mm);
-})();
-</script>
-
-<!-- ① VIP 대시보드에 Lv4·5 버튼 추가 -->
-<script>
-(function(){
-  const wdiv=document.querySelector('.vdash-weapon');
-  if(!wdiv)return;
-  // Lv4
-  const b4=document.createElement('button');
-  b4.className='wlv-btn vipp-only';b4.id='wlv-4';
-  b4.innerHTML='Lv4<br><span style="font-size:5px;color:#6a0088">VIP+전용</span>';
-  b4.onclick=()=>setWeaponLevel(4);
-  wdiv.appendChild(b4);
-  // Lv5
-  const b5=document.createElement('button');
-  b5.className='wlv-btn vipp-only';b5.id='wlv-5';
-  b5.innerHTML='Lv5<br><span style="font-size:5px;color:#6a0088">VIP+전용</span>';
-  b5.onclick=()=>setWeaponLevel(5);
-  wdiv.appendChild(b5);
-})();
-
-// setWeaponLevel 오버라이드 - Lv4·5 VIP+ 전용 체크 추가
-const _origSWL=window.setWeaponLevel;
-window.setWeaponLevel=function(lv){
-  if((lv===4||lv===5)&&!window._isVIPP){
-    alert('💜 Lv4·Lv5는 VIP+ 전용 무기입니다!');return;
-  }
-  window._weaponLevel=lv;
-  [1,2,3,4,5].forEach(i=>{
-    const el=document.getElementById('wlv-'+i);
-    if(el)el.classList.toggle('active',i===lv);
-  });
-  const descs={
-    1:'Lv1: 범위 48px / 데미지 1 / 기본',
-    2:'Lv2: 범위 72px / 데미지 2 / 불꽃 이펙트',
-    3:'Lv3: 범위 100px / 데미지 3 / 번개+광역',
-    4:'Lv4: 범위 130px / 데미지 4 / 썬더볼 (VIP+)',
-    5:'Lv5: 범위 160px / 데미지 6 / 레이저 빔 (VIP+ MAX)',
-  };
-  const d=document.getElementById('vd-weapdesc');if(d)d.textContent=descs[lv]||descs[1];
-  const wlEl=document.getElementById('vd-weaponlv');if(wlEl)wlEl.textContent='Lv'+lv;
-  const hwEl=document.getElementById('hud-weapon-lv');if(hwEl)hwEl.textContent=lv;
-  const btn=document.getElementById('vdash-upgrade-btn');
-  if(btn){
-    if(lv>=5){btn.textContent='⚔️ MAX 레벨 달성!';btn.disabled=true;}
-    else{btn.textContent='⚔️ Lv'+(lv+1)+(lv>=3?' (VIP+필요)':'')+' 강화';btn.disabled=false;}
-  }
-};
-</script>
-
-<!-- ⑧ 무한 쿠폰 (unlimited) - 관리자 패널에 옵션 추가 -->
-<script>
-(function(){
-  const adminBox=document.querySelector('.admin-box');if(!adminBox)return;
-  const couponSection=document.querySelector('#btn-create-coupon');if(!couponSection)return;
-  const row=couponSection.closest('.admin-row');if(!row)return;
-
-  // unlimited 체크박스 추가
-  const label=document.createElement('label');
-  label.style.cssText='color:#888;font-size:6px;display:flex;align-items:center;gap:4px;cursor:pointer;margin-top:4px;';
-  const cb=document.createElement('input');cb.type='checkbox';cb.id='coupon-unlimited';
-  label.appendChild(cb);
-  label.appendChild(document.createTextNode('무한 사용 (unlimited)'));
-  row.parentNode.insertBefore(label,row.nextSibling);
-
-  // adminCreateCoupon 오버라이드 - unlimited 지원
-  const origCreate=document.getElementById('btn-create-coupon').onclick;
-  document.getElementById('btn-create-coupon').onclick=null;
-  document.getElementById('btn-create-coupon').addEventListener('click',async function(){
-    const code=document.getElementById('admin-coupon-code').value.trim().toUpperCase();
-    const type=document.getElementById('admin-coupon-type').value;
-    const unlimited=document.getElementById('coupon-unlimited').checked;
-    const msg=document.getElementById('admin-msg');
-    if(!code||code.length<4){msg.textContent='❌ 코드는 4자 이상';return;}
-    try{
-      const db=window._db;
-      const {doc,setDoc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      await setDoc(doc(db,'coupons',code),{
-        type,used:false,unlimited,usedCount:0,
-        createdAt:Date.now(),createdBy:window._currentUser?.email
-      });
-      msg.textContent='✅ 쿠폰 ['+code+'] 생성'+(unlimited?' (무한사용)':'')+'완료 ('+type+')';
-      document.getElementById('admin-coupon-code').value='';
-    }catch(ex){msg.textContent='오류: '+ex.message;}
-  });
-})();
-
-// useCoupon 오버라이드 - unlimited 쿠폰 지원
-const _origUseCoupon=window.useCoupon;
-window.useCoupon=async function(){
-  const code=document.getElementById('coupon-input').value.trim().toUpperCase();
-  const msg=document.getElementById('coupon-msg');
-  const user=window._currentUser;
-  if(!user){msg.style.color='#f55';msg.textContent='로그인 필요';return;}
-  if(!code){msg.style.color='#f55';msg.textContent='코드를 입력하세요';return;}
-  msg.style.color='#aaa';msg.textContent='확인 중...';
-  try{
-    const {doc,getDoc,updateDoc,collection,getDocs}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const db=window._db;
-    const cDoc=await getDoc(doc(db,'coupons',code));
-    if(!cDoc.exists()){msg.style.color='#f55';msg.textContent='❌ 존재하지 않는 코드';return;}
-    const cdata=cDoc.data();
-    const unlimited=!!cdata.unlimited;
-    // 이미 사용 여부 체크
-    const ud=await getDoc(doc(db,'users',user.uid));
-    const udata=ud.exists()?ud.data():{};
-    const myUsed=udata.usedCoupons||{};
-    if(myUsed[code]){msg.style.color='#f55';msg.textContent='❌ 이미 사용한 코드';return;}
-    if(!unlimited&&cdata.used&&cdata.usedBy!==user.uid){msg.style.color='#f55';msg.textContent='❌ 이미 사용된 코드';return;}
-    // 적용
-    let rewardMsg='';
-    if(cdata.type==='vip'){await updateDoc(doc(db,'users',user.uid),{vip:true});window._isVIP=true;rewardMsg='VIP 적용!';}
-    else if(cdata.type==='vipp'){await updateDoc(doc(db,'users',user.uid),{vip:true,vipp:true});window._isVIP=true;window._isVIPP=true;rewardMsg='VIP+ 적용!';}
-    else if(cdata.type==='score10k'){if(typeof score!=='undefined'&&gs==='playing'){score+=10000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+10,000점!';}
-    else if(cdata.type==='score50k'){if(typeof score!=='undefined'&&gs==='playing'){score+=50000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+50,000점!';}
-    else if(cdata.type==='score100k'){if(typeof score!=='undefined'&&gs==='playing'){score+=100000;if(typeof updateHUD==='function')updateHUD();}rewardMsg='+100,000점!';}
-    // 사용 기록
-    const newMyUsed={...myUsed,[code]:Date.now()};
-    await updateDoc(doc(db,'users',user.uid),{usedCoupons:newMyUsed});
-    const usedCount=(cdata.usedCount||0)+1;
-    if(!unlimited){await updateDoc(doc(db,'coupons',code),{used:true,usedBy:user.uid,usedAt:Date.now(),usedCount});}
-    else{await updateDoc(doc(db,'coupons',code),{usedCount,lastUsedBy:user.uid,lastUsedAt:Date.now()});}
-    msg.style.color='#0f0';msg.textContent='🎉 쿠폰 사용 완료! '+rewardMsg+(unlimited?' (무한쿠폰)':'');
-    document.getElementById('coupon-input').value='';
-  }catch(ex){msg.style.color='#f55';msg.textContent='오류: '+ex.message;}
-};
-</script>
-
-<!-- ③ VIP+ 경험치 시스템 -->
-<script>
-// VIP+ 대시보드 섹션에 EXP 바 추가
-(function(){
-  const dashBox=document.querySelector('.vippdash-box');if(!dashBox)return;
-  const firstSection=dashBox.querySelector('.vippdash-section');if(!firstSection)return;
-  const expDiv=document.createElement('div');
-  expDiv.className='vippdash-section';
-  expDiv.innerHTML=`
-    <div class="vippdash-label">⚡ VIP+ 경험치 레벨</div>
-    <div id="vipp-exp-bar-wrap">
-      <div class="exp-label">
-        <span id="vipp-lv-label">Lv 1</span>
-        <span id="vipp-exp-label">0 / 1000 EXP</span>
-      </div>
-      <div id="vipp-exp-track"><div id="vipp-exp-fill" style="width:0%"></div></div>
-      <div style="color:#664488;font-size:5.5px;margin-top:4px;">적 처치 +50EXP · 보스 +500EXP · 스테이지 클리어 +200EXP<br>레벨업 시 +2000점 자동 지급!</div>
-    </div>`;
-  dashBox.insertBefore(expDiv,firstSection);
-})();
-
-let _vippExp=0;
-let _vippLv=1;
-const _vippExpTable=[0,1000,2500,5000,10000,20000,40000,80000,150000,300000];
-
-function addVIPPExp(amount){
-  if(!window._isVIPP)return;
-  _vippExp+=amount;
-  let leveled=false;
-  while(_vippLv<_vippExpTable.length-1&&_vippExp>=_vippExpTable[_vippLv]){
-    _vippLv++;leveled=true;
-    if(typeof score!=='undefined'){score+=2000;if(typeof updateHUD==='function')updateHUD();}
-    if(typeof showNotif==='function')showNotif(`💜 VIP+ Lv${_vippLv} 달성! +2000점`,'#cc44ff',2500);
-  }
-  const lv=_vippLv;
-  const curBase=_vippExpTable[lv-1]||0;
-  const nextBase=_vippExpTable[lv]||_vippExpTable[_vippExpTable.length-1];
-  const pct=Math.min(100,Math.floor((_vippExp-curBase)/(nextBase-curBase)*100));
-  const fill=document.getElementById('vipp-exp-fill');if(fill)fill.style.width=pct+'%';
-  const lbl=document.getElementById('vipp-lv-label');if(lbl)lbl.textContent='Lv '+lv;
-  const elbl=document.getElementById('vipp-exp-label');if(elbl)elbl.textContent=(_vippExp-curBase)+' / '+Math.max(1,nextBase-curBase)+' EXP';
-}
-window.addVIPPExp=addVIPPExp;
-</script>
-
-<!-- ⑤ VIP+: 시간 정지 스킬 -->
-<script>
-(function(){
-  const dashBox=document.querySelector('.vippdash-box');if(!dashBox)return;
-  const sections=dashBox.querySelectorAll('.vippdash-section');
-  const toggleSection=sections[1];if(!toggleSection)return;
-  // 토글 추가
-  const div=document.createElement('div');
-  div.className='vippdash-toggle';div.style.marginTop='6px';
-  div.innerHTML=`<span class="vippdash-toggle-name">⏸️ 시간 정지 스킬 (쿨 60초)</span>
-    <button id="btn-timestop">⏸ 시간 정지!</button>`;
-  toggleSection.appendChild(div);
-  document.getElementById('btn-timestop').onclick=triggerTimeStop;
-})();
-
-let _timeStopActive=false;
-let _timeStopCooldown=0;
-
-function triggerTimeStop(){
-  if(!window._isVIPP)return;
-  if(_timeStopCooldown>0){if(typeof showNotif==='function')showNotif('⏸️ 쿨다운: '+Math.ceil(_timeStopCooldown/60)+'초','#88f',900);return;}
-  if(typeof gs==='undefined'||gs!=='playing'){if(typeof showNotif==='function')showNotif('⚠️ 게임 중에만 사용 가능','#f80',1200);return;}
-  _timeStopActive=true;
-  _timeStopCooldown=3600; // 60초 (60fps 기준)
-  if(typeof showNotif==='function')showNotif('⏸️ 시간 정지! 3초간 적이 멈춥니다','#88f',3200);
-  // 파티클 이펙트
-  if(typeof spawnP==='function'&&typeof player!=='undefined'){
-    for(let i=0;i<30;i++)spawnP(Math.random()*800,Math.random()*420,'#aaf',1);
-  }
-  setTimeout(()=>{_timeStopActive=false;if(typeof showNotif==='function')showNotif('▶️ 시간 재개!','#88f',1000);},3000);
-  const btn=document.getElementById('btn-timestop');
-  if(btn){btn.disabled=true;btn.textContent='⏸ 쿨다운 중...';}
-}
-window.triggerTimeStop=triggerTimeStop;
-
-// 시간정지 키바인딩 (T키)
-document.addEventListener('keydown',function(e){
-  if(e.code==='KeyT'&&window._isVIPP){e.preventDefault();triggerTimeStop();}
-});
-</script>
-
-<!-- ⑥ VIP 대시보드 - 플레이 히스토리 그래프 -->
-<script>
-(function(){
-  const dashBox=document.querySelector('.vdash-box');if(!dashBox)return;
-  const closeBtn=document.querySelector('#btn-vdash-close');if(!closeBtn)return;
-  const histDiv=document.createElement('div');
-  histDiv.className='vdash-section';
-  histDiv.innerHTML=`
-    <div class="vdash-label">📈 최근 점수 기록</div>
-    <div id="vd-history-wrap">
-      <canvas id="vd-history-canvas" width="440" height="70"></canvas>
-      <div style="color:#442200;font-size:5.5px;text-align:center;margin-top:4px;">최근 10판 점수 추이</div>
-    </div>`;
-  const lastChild=dashBox.lastElementChild;
-  dashBox.insertBefore(histDiv,lastChild);
-})();
-
-async function drawHistoryGraph(scores){
-  const canvas=document.getElementById('vd-history-canvas');
-  if(!canvas)return;
-  const ctx2=canvas.getContext('2d');
-  const w=canvas.width,h=canvas.height;
-  ctx2.clearRect(0,0,w,h);
-  if(!scores||scores.length===0){
-    ctx2.fillStyle='#332200';ctx2.font='6px Press Start 2P';ctx2.textAlign='center';
-    ctx2.fillText('기록 없음',w/2,h/2);return;
-  }
-  const mx=Math.max(...scores,1);
-  const mn=0;
-  const pad=8;
-  const bw=Math.floor((w-pad*2)/scores.length)-2;
-  // 격자
-  ctx2.strokeStyle='rgba(255,204,0,.08)';ctx2.lineWidth=1;
-  for(let i=0;i<4;i++){const y=pad+(h-pad*2)/3*i;ctx2.beginPath();ctx2.moveTo(pad,y);ctx2.lineTo(w-pad,y);ctx2.stroke();}
-  // 바
-  scores.forEach((s,i)=>{
-    const bh=Math.max(4,Math.floor((s/mx)*(h-pad*2)));
-    const x=pad+i*(bw+2);const y=h-pad-bh;
-    const alpha=0.4+0.6*(i/(scores.length-1||1));
-    ctx2.fillStyle=`rgba(255,204,0,${alpha})`;
-    ctx2.fillRect(x,y,bw,bh);
-    if(s===mx){ctx2.fillStyle='#fff';ctx2.font='5px Press Start 2P';ctx2.textAlign='center';ctx2.fillText('MAX',x+bw/2,y-2);}
-  });
-  // 선
-  ctx2.strokeStyle='rgba(255,180,0,.7)';ctx2.lineWidth=1.5;ctx2.beginPath();
-  scores.forEach((s,i)=>{const x=pad+i*(bw+2)+bw/2;const y=h-pad-Math.max(4,Math.floor((s/mx)*(h-pad*2)));i===0?ctx2.moveTo(x,y):ctx2.lineTo(x,y);});
-  ctx2.stroke();
-}
-
-const _origRefresh=window.refreshVipDashboard;
-window.refreshVipDashboard=async function(){
-  if(_origRefresh)await _origRefresh();
-  // 히스토리 로드
-  try{
-    const user=window._currentUser;if(!user)return;
-    const db=window._db;
-    const {collection,query,where,orderBy,limit,getDocs}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const q=query(collection(db,'scores'),where('uid','==',user.uid),orderBy('playedAt','desc'),limit(10));
-    const snap=await getDocs(q);
-    const scores=[];
-    snap.forEach(d=>scores.push(d.data().score||0));
-    scores.reverse();
-    drawHistoryGraph(scores);
-  }catch(ex){console.warn('history graph',ex);}
-};
-</script>
-
-<!-- ⑦ VIP+ 미니맵 -->
-<script>
-function drawMinimap(){
-  if(!window._isVIPP)return;
-  if(typeof gs==='undefined'||gs!=='playing')return;
-  const mm=document.getElementById('minimap-canvas');if(!mm)return;
-  if(mm.style.display==='none'||!mm.style.display)mm.style.display='block';
-  const mc=mm.getContext('2d');
-  const mw=120,mh=48;
-  mc.clearRect(0,0,mw,mh);
-  mc.fillStyle='rgba(0,0,0,.7)';mc.fillRect(0,0,mw,mh);
-  // 스케일
-  if(typeof worldW==='undefined')return;
-  const sx=mw/worldW,sy=mh/420;
-  // 라이터
-  if(typeof lighter!=='undefined'&&!lighter.got){
-    mc.fillStyle='#f80';mc.fillRect(lighter.x*sx-2,lighter.y*sy-2,5,5);
-    mc.font='8px serif';mc.fillText('🔥',lighter.x*sx-4,lighter.y*sy+4);
-  }
-  // 적
-  if(typeof enemies!=='undefined'){
-    enemies.forEach(en=>{if(!en.alive)return;mc.fillStyle='#f44';mc.fillRect(en.x*sx-1.5,en.y*sy-1.5,3,3);});
-  }
-  // 보스
-  if(typeof boss!=='undefined'&&boss&&boss.alive&&boss.active){
-    mc.fillStyle='#f0f';mc.fillRect(boss.x*sx-3,boss.y*sy-3,6,6);
-  }
-  // 플레이어
-  if(typeof player!=='undefined'){
-    mc.fillStyle='#0f0';mc.fillRect(player.x*sx-2,player.y*sy-2,5,5);
-  }
-  // 테두리
-  mc.strokeStyle='rgba(204,68,255,.5)';mc.lineWidth=1;mc.strokeRect(0,0,mw,mh);
-  mc.font='5px monospace';mc.fillStyle='rgba(204,68,255,.7)';mc.fillText('MAP',2,7);
-}
-</script>
-
-<!-- ⑨ VIP: 폭발 공격 (Space 2연타) -->
-<script>
-let _blastCombo=0;
-let _blastTimer=0;
-const _BLAST_COOLDOWN=300;
-let _blastCooldown=0;
-
-document.addEventListener('keydown',function(e){
-  if((e.code==='Space'||e.code==='KeyX')&&window._isVIP&&typeof gs!=='undefined'&&gs==='playing'){
-    if(_blastCooldown>0)return;
-    const now=Date.now();
-    if(now-_blastTimer<400){
-      // 2연타 폭발
-      triggerBlast();
-      _blastCombo=0;
-    } else {
-      _blastCombo=1;_blastTimer=now;
-    }
-  }
-});
-
-function triggerBlast(){
-  if(!window._isVIP||typeof player==='undefined')return;
-  if(_blastCooldown>0){if(typeof showNotif==='function')showNotif('💥 폭발 쿨다운: '+Math.ceil(_blastCooldown/60)+'초','#f80',800);return;}
-  _blastCooldown=_BLAST_COOLDOWN;
-  if(typeof showNotif==='function')showNotif('💥 폭발 공격!','#f80',1200);
-  // 폭발 범위
-  const bx=player.x+player.w/2,by=player.y+player.h/2;
-  const blastR=100;
-  // 파티클
-  for(let i=0;i<50;i++){
-    const angle=Math.random()*Math.PI*2;const spd=3+Math.random()*8;
-    if(typeof particles!=='undefined')particles.push({x:bx,y:by,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd,color:['#f80','#fc0','#f00','#fff'][Math.floor(Math.random()*4)],life:35+Math.random()*25,maxLife:60,type:'burst',size:8+Math.random()*10});
-  }
-  if(typeof screenShake!=='undefined')screenShake=18;
-  // 적 피해
-  if(typeof enemies!=='undefined'){
-    enemies.forEach(en=>{
-      if(!en.alive)return;
-      const dx=en.x+en.w/2-bx,dy=en.y+en.h/2-by;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<blastR){
-        const dmg=window._isVIPP?4:2;en.hp-=dmg;en.stunTimer=30;en.vx=(dx/dist)*6;en.vy=-4;
-        if(typeof spawnP==='function')spawnP(en.x+en.w/2,en.y+10,'#f44',10);
-        if(en.hp<=0){
-          en.alive=false;
-          if(typeof hitCombo==='function')hitCombo();
-          const pts=(typeof getES==='function'?getES(en.type):150)*(window._isVIPP&&vippToggles.scoreX10?10:1);
-          if(typeof score!=='undefined'){score+=pts;if(typeof updateHUD==='function')updateHUD();}
-          if(typeof addFloat==='function')addFloat(en.x,en.y-8,'💥 +'+pts);
-        }
-      }
-    });
-  }
-  // 보스 피해
-  if(typeof boss!=='undefined'&&boss&&boss.alive&&boss.active){
-    const dx=boss.x+boss.w/2-bx,dy=boss.y+boss.h/2-by;
-    if(Math.sqrt(dx*dx+dy*dy)<blastR+30){
-      const dmg=window._isVIPP?6:2;boss.hp-=dmg;boss.stunTimer=20;
-      if(typeof spawnP==='function')spawnP(boss.x+boss.w/2,boss.y+20,'#f22',18);
-      if(typeof addFloat==='function')addFloat(boss.x,boss.y-10,'💥 BLAST -'+dmg);
-      if(boss.hp<=0){
-        boss.alive=false;
-        const bpts=1000*(typeof sn!=='undefined'?Math.ceil(sn/2):1);
-        if(typeof score!=='undefined'){score+=bpts;if(typeof updateHUD==='function')updateHUD();}
-        if(typeof addFloat==='function')addFloat(boss.x,boss.y-20,'🏆 BOSS! +'+bpts);
-      }
-    }
-  }
-  if(window.addVIPPExp)window.addVIPPExp(100);
-}
-window.triggerBlast=triggerBlast;
-</script>
-
-<!-- ⑩ VIP+: 자동 힐 (HP 1 이하 시 자동 회복, 쿨 30초) -->
-<script>
-let _autoHealCooldown=0;
-
-(function(){
-  const dashBox=document.querySelector('.vippdash-box');if(!dashBox)return;
-  const sections=dashBox.querySelectorAll('.vippdash-section');
-  const toggleSection=sections[1];if(!toggleSection)return;
-  const div=document.createElement('div');
-  div.className='vippdash-toggle';div.style.marginTop='6px';
-  div.innerHTML=`<span class="vippdash-toggle-name">💊 자동 힐 (HP≤1 시 자동 회복, 쿨 30초)</span>
-    <button class="toggle-btn on" id="toggle-autoheal" onclick="toggleVippFeature('autoheal')">ON</button>`;
-  toggleSection.appendChild(div);
-  vippToggles.autoheal=true;
-})();
-</script>
-
-<!-- ★ 메인 게임 루프 훅: 시간정지·미니맵·자동힐·EXP·폭발쿨 통합 패치 -->
-<script>
-// loop() 함수 내 update()를 감싸는 패치
-const _origLoop_ref=window.requestAnimationFrame;
-// update 후처리를 위한 래퍼
-const _gameUpdateHook=function(){
-  // ⑤ 시간 정지 쿨다운
-  if(_timeStopCooldown>0){
-    _timeStopCooldown--;
-    if(_timeStopCooldown===0){
-      const btn=document.getElementById('btn-timestop');
-      if(btn){btn.disabled=false;btn.textContent='⏸ 시간 정지!';}
-    }
-  }
-  // ⑨ 폭발 쿨다운
-  if(_blastCooldown>0)_blastCooldown--;
-
-  // ⑤ 시간정지 중 적 AI 비활성화 (enemies.forEach 후처리)
-  if(_timeStopActive&&typeof enemies!=='undefined'){
-    enemies.forEach(en=>{if(!en.alive)return;en.vx=0;en.vy=0;});
-    if(typeof boss!=='undefined'&&boss&&boss.alive){boss.vx=0;boss.vy=0;}
-  }
-
-  // ⑩ 자동 힐
-  if(window._isVIPP&&vippToggles.autoheal&&typeof energy!=='undefined'&&typeof gs!=='undefined'&&gs==='playing'){
-    if(_autoHealCooldown>0){_autoHealCooldown--;}
-    else if(energy<=1&&energy>0){
-      energy=Math.min(3,energy+1);_autoHealCooldown=1800;
-      if(typeof updateHUD==='function')updateHUD();
-      if(typeof showNotif==='function')showNotif('💊 자동 힐!','#0f0',1500);
-      if(typeof addFloat==='function'&&typeof player!=='undefined')addFloat(player.x,player.y-20,'💊 AUTO HEAL!');
-      if(window.addVIPPExp)window.addVIPPExp(50);
-    }
-  }
-
-  // ③ EXP - 적 처치 감지 (combo 증가 시)
-  // EXP는 triggerAttack에서 직접 추가하는 방식으로 처리
-
-  // ⑦ 미니맵 그리기
-  drawMinimap();
-};
-
-// 원본 loop를 감싸는 새 루프
-const _origUpdateRef=window.update;
-if(typeof window.update==='function'){
-  window._hookedUpdate=function(){
-    if(typeof _origUpdateRef==='function')_origUpdateRef();
-    _gameUpdateHook();
-  };
-} else {
-  // update가 지역 변수이므로 RAF 레벨에서 후처리
-  const _rafOrig=window.requestAnimationFrame.bind(window);
-  let _hookInstalled=false;
-  const _installHook=function(){
-    if(_hookInstalled)return;
-    _hookInstalled=true;
-    // draw 후에 훅 삽입
-    const _origDraw=window.draw;
-    if(typeof _origDraw==='function'){
-      window.draw=function(){_origDraw();_gameUpdateHook();};
-    }
-  };
-  setTimeout(_installHook,1000);
-}
-
-// draw 함수에 시간정지 오버레이 추가
-setTimeout(function(){
-  const _d=window.draw;
-  if(typeof _d==='function'){
-    window.draw=function(){
-      _d();
-      // 시간정지 오버레이
-      if(_timeStopActive&&typeof ctx!=='undefined'){
-        ctx.save();
-        ctx.fillStyle='rgba(100,100,255,0.12)';ctx.fillRect(0,0,800,420);
-        ctx.font='bold 14px Press Start 2P';ctx.textAlign='center';
-        ctx.fillStyle='rgba(180,180,255,0.8)';ctx.fillText('⏸ TIME STOP',400,30);
-        ctx.restore();
-      }
-      // 폭발 쿨 게이지 (VIP)
-      if(window._isVIP&&typeof ctx!=='undefined'){
-        const cdPct=Math.max(0,1-_blastCooldown/_BLAST_COOLDOWN);
-        ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(6,370-60,60,7);
-        ctx.fillStyle=_blastCooldown>0?'rgba(255,100,0,.6)':'rgba(255,150,0,.9)';
-        ctx.fillRect(6,370-60,60*cdPct,7);
-        ctx.font='5px Press Start 2P';
-        ctx.fillStyle=_blastCooldown>0?'#884400':'#f80';
-        ctx.textAlign='left';ctx.fillText(_blastCooldown>0?'💥 쿨':'💥 BLAST!',6,370-64);
-      }
-      // 자동힐 쿨 표시 (VIP+)
-      if(window._isVIPP&&typeof ctx!=='undefined'&&vippToggles.autoheal){
-        const ahpct=Math.max(0,1-_autoHealCooldown/1800);
-        ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(6,370-44,60,7);
-        ctx.fillStyle=_autoHealCooldown>0?'rgba(0,180,0,.5)':'rgba(0,255,0,.8)';
-        ctx.fillRect(6,370-44,60*ahpct,7);
-        ctx.font='5px Press Start 2P';
-        ctx.fillStyle=_autoHealCooldown>0?'#004400':'#0f0';
-        ctx.textAlign='left';ctx.fillText(_autoHealCooldown>0?'💊 쿨':'💊 READY',6,370-48);
-      }
-      _gameUpdateHook();
-    };
-  }
-},1500);
-
-// ③ EXP 지급 훅 - triggerAttack 내 적 처치 시
-const _origTriggerAttack=window.triggerAttack;
-// triggerAttack은 지역 함수이므로, 전역 노출 여부 확인 후 래핑
-if(typeof window.triggerAttack==='function'){
-  const _ota=window.triggerAttack;
-  window.triggerAttack=function(){
-    const prevCombo=typeof combo!=='undefined'?combo:0;
-    _ota();
-    const newCombo=typeof combo!=='undefined'?combo:0;
-    if(newCombo>prevCombo&&window.addVIPPExp)window.addVIPPExp(50);
-  };
-}
-
-// ④ 리더보드 - 칭호 표시 강화 (loadLeaderboard 오버라이드)
-const _origLB=window.loadLeaderboard;
-window.loadLeaderboard=async function(tab='all'){
-  const el=document.getElementById('lb-list');
-  el.innerHTML='<div class="lb-loading">불러오는 중...</div>';
-  try{
-    const {collection,query,where,orderBy,limit,getDocs}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const db=window._db;
-    let q;
-    if(tab==='mine'&&window._currentUser){
-      q=query(collection(db,'scores'),where('uid','==',window._currentUser.uid),orderBy('score','desc'),limit(20));
-    }else if(tab==='weekly'){
-      const weekAgo=Date.now()-7*24*60*60*1000;
-      q=query(collection(db,'scores'),where('playedAt','>=',weekAgo),orderBy('playedAt','desc'),orderBy('score','desc'),limit(20));
-    }else{
-      q=query(collection(db,'scores'),orderBy('score','desc'),limit(50));
-    }
-    const snap=await getDocs(q);
-    if(snap.empty){el.innerHTML='<div class="lb-empty">아직 기록이 없어요!</div>';return;}
-
-    // 유저 칭호 조회
-    const uids=new Set();snap.forEach(d=>uids.add(d.data().uid));
-    const titleMap={};
-    await Promise.all([...uids].map(async uid=>{
-      try{
-        const {doc,getDoc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const ud=await getDoc(doc(db,'users',uid));
-        if(ud.exists())titleMap[uid]=ud.data().title||'';
-      }catch(ex){}
-    }));
-
-    let html='';let rank=1;
-    const escH=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    snap.forEach(d=>{
-      const data=d.data();
-      const isMe=window._currentUser&&data.uid===window._currentUser.uid;
-      const rankCls=rank===1?'top1':rank===2?'top2':rank===3?'top3':'';
-      const rankTxt=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
-      const vipTag=data.vip?'<span class="vip-tag"> 👑</span>':'';
-      const dt=data.playedAt?new Date(data.playedAt).toLocaleDateString('ko-KR'):'';
-      const userTitle=titleMap[data.uid]?`<span style="color:#f80;font-size:5.5px;">[${escH(titleMap[data.uid])}]</span> `:'';
-      html+=`<div class="lb-row${isMe?' me':''}">
-        <div class="lb-rank ${rankCls}">${rankTxt}</div>
-        <div class="lb-name">${userTitle}${escH(data.name||'??')}${vipTag}${isMe?' ◀':''}<br><span style="color:#333;font-size:5px;">${dt}</span></div>
-        <div class="lb-stage">S${data.stage||1}</div>
-        <div class="lb-score">${String(data.score||0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div>
-      </div>`;
-      rank++;
-    });
-    el.innerHTML=html;
-  }catch(ex){el.innerHTML='<div class="lb-empty">오류: '+ex.message+'</div>';}
-};
-
-// ③⑨ EXP 지급: 스테이지 클리어 시 (advanceStage 오버라이드)
-const _origAdv=window.advanceStage;
-if(typeof _origAdv==='function'){
-  window.advanceStage=function(){
-    _origAdv();
-    if(window.addVIPPExp)window.addVIPPExp(200);
-  };
-}
-// 보스 처치 EXP
-const _origTakeDmg=window.takeDmg;
-// boss 처치는 triggerAttack 내에서 발생하므로 별도 처리 필요 없음 (hitCombo로 추적)
-</script>
-<!-- ══════════════════════════════ 패치 끝 ══════════════════════════════ -->
